@@ -14,16 +14,282 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ai_insights: {
+        Row: {
+          created_at: string
+          id: string
+          insight_type: Database["public"]["Enums"]["insight_type"]
+          model: string | null
+          prompt: string | null
+          response: string
+          stock_id: string
+          tokens_used: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          insight_type: Database["public"]["Enums"]["insight_type"]
+          model?: string | null
+          prompt?: string | null
+          response: string
+          stock_id: string
+          tokens_used?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          insight_type?: Database["public"]["Enums"]["insight_type"]
+          model?: string | null
+          prompt?: string | null
+          response?: string
+          stock_id?: string
+          tokens_used?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_insights_stock_id_fkey"
+            columns: ["stock_id"]
+            isOneToOne: false
+            referencedRelation: "stocks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alerts: {
+        Row: {
+          alert_type: Database["public"]["Enums"]["alert_type"]
+          condition_text: string | null
+          condition_value: number | null
+          created_at: string
+          id: string
+          is_active: boolean
+          is_read: boolean
+          is_triggered: boolean
+          message: string | null
+          stock_id: string
+          triggered_at: string | null
+          user_id: string
+        }
+        Insert: {
+          alert_type: Database["public"]["Enums"]["alert_type"]
+          condition_text?: string | null
+          condition_value?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_read?: boolean
+          is_triggered?: boolean
+          message?: string | null
+          stock_id: string
+          triggered_at?: string | null
+          user_id: string
+        }
+        Update: {
+          alert_type?: Database["public"]["Enums"]["alert_type"]
+          condition_text?: string | null
+          condition_value?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_read?: boolean
+          is_triggered?: boolean
+          message?: string | null
+          stock_id?: string
+          triggered_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alerts_stock_id_fkey"
+            columns: ["stock_id"]
+            isOneToOne: false
+            referencedRelation: "stocks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      news_articles: {
+        Row: {
+          fetched_at: string
+          headline: string
+          id: string
+          published_at: string | null
+          sentiment: string | null
+          sentiment_score: number | null
+          source: string
+          stock_id: string
+          summary: string | null
+          url: string | null
+        }
+        Insert: {
+          fetched_at?: string
+          headline: string
+          id?: string
+          published_at?: string | null
+          sentiment?: string | null
+          sentiment_score?: number | null
+          source: string
+          stock_id: string
+          summary?: string | null
+          url?: string | null
+        }
+        Update: {
+          fetched_at?: string
+          headline?: string
+          id?: string
+          published_at?: string | null
+          sentiment?: string | null
+          sentiment_score?: number | null
+          source?: string
+          stock_id?: string
+          summary?: string | null
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_articles_stock_id_fkey"
+            columns: ["stock_id"]
+            isOneToOne: false
+            referencedRelation: "stocks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notes: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          stock_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          stock_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          stock_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notes_stock_id_fkey"
+            columns: ["stock_id"]
+            isOneToOne: false
+            referencedRelation: "stocks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_prices: {
+        Row: {
+          change_amount: number | null
+          change_percent: number | null
+          fetched_at: string
+          high_52w: number | null
+          id: string
+          low_52w: number | null
+          market_cap: number | null
+          price: number
+          source: string
+          stock_id: string
+          volume: number | null
+        }
+        Insert: {
+          change_amount?: number | null
+          change_percent?: number | null
+          fetched_at?: string
+          high_52w?: number | null
+          id?: string
+          low_52w?: number | null
+          market_cap?: number | null
+          price: number
+          source?: string
+          stock_id: string
+          volume?: number | null
+        }
+        Update: {
+          change_amount?: number | null
+          change_percent?: number | null
+          fetched_at?: string
+          high_52w?: number | null
+          id?: string
+          low_52w?: number | null
+          market_cap?: number | null
+          price?: number
+          source?: string
+          stock_id?: string
+          volume?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_prices_stock_id_fkey"
+            columns: ["stock_id"]
+            isOneToOne: false
+            referencedRelation: "stocks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stocks: {
+        Row: {
+          added_at: string
+          id: string
+          name: string | null
+          sector: string | null
+          ticker: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          id?: string
+          name?: string | null
+          sector?: string | null
+          ticker: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          id?: string
+          name?: string | null
+          sector?: string | null
+          ticker?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      user_owns_stock: {
+        Args: { _stock_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      alert_type:
+        | "price_drop"
+        | "price_spike"
+        | "near_low"
+        | "near_high"
+        | "unusual_volume"
+        | "news_spike"
+      insight_type:
+        | "news_summary"
+        | "movement_explanation"
+        | "sentiment_analysis"
+        | "qa_response"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +416,21 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      alert_type: [
+        "price_drop",
+        "price_spike",
+        "near_low",
+        "near_high",
+        "unusual_volume",
+        "news_spike",
+      ],
+      insight_type: [
+        "news_summary",
+        "movement_explanation",
+        "sentiment_analysis",
+        "qa_response",
+      ],
+    },
   },
 } as const
