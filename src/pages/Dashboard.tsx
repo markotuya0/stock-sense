@@ -5,7 +5,10 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStocks } from "@/hooks/useStocks";
+import { useStockData } from "@/hooks/useStockData";
+import { StockWithPrice } from "@/types/database";
 import { Watchlist } from "@/components/dashboard/Watchlist";
+import { StockDetail } from "@/components/dashboard/StockDetail";
 import { Button } from "@/components/ui/button";
 import {
   TrendingUp,
@@ -23,12 +26,16 @@ const Dashboard = () => {
   const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const [isDark, setIsDark] = useState(false);
+  const [selectedStock, setSelectedStock] = useState<StockWithPrice | null>(null);
+  const { fetchStockPrice } = useStockData();
+  
   const {
     stocks,
     loading: stocksLoading,
     addStock,
     removeStock,
     refreshPrices,
+    refetch,
   } = useStocks();
 
   // Check initial theme
@@ -52,6 +59,33 @@ const Dashboard = () => {
     const newIsDark = !isDark;
     setIsDark(newIsDark);
     document.documentElement.classList.toggle("dark", newIsDark);
+  };
+
+  const handleAddStock = async (ticker: string, name?: string) => {
+    const result = await addStock(ticker, name);
+    
+    if (!result.error && result.data) {
+      // Fetch real price data for the new stock
+      await fetchStockPrice(ticker, result.data.id);
+      await refetch();
+    }
+    
+    return result;
+  };
+
+  const handleViewDetails = (stockId: string) => {
+    const stock = stocks.find((s) => s.id === stockId);
+    if (stock) {
+      setSelectedStock(stock);
+    }
+  };
+
+  const handleRefreshAll = async () => {
+    // Refresh all stock prices
+    for (const stock of stocks) {
+      await fetchStockPrice(stock.ticker, stock.id);
+    }
+    await refetch();
   };
 
   if (authLoading) {
@@ -134,94 +168,108 @@ const Dashboard = () => {
 
       {/* Main content */}
       <main className="mx-auto max-w-7xl px-4 py-8 md:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          {/* Welcome section */}
-          <div className="mb-8">
-            <h1 className="mb-2 text-2xl font-bold text-foreground md:text-3xl">
-              Good{" "}
-              {new Date().getHours() < 12
-                ? "morning"
-                : new Date().getHours() < 18
-                ? "afternoon"
-                : "evening"}
-              !
-            </h1>
-            <p className="text-muted-foreground">
-              Here's what's happening with your watchlist today.
-            </p>
-          </div>
+        <AnimatePresence mode="wait">
+          {selectedStock ? (
+            <StockDetail
+              key="detail"
+              stock={selectedStock}
+              onBack={() => setSelectedStock(null)}
+              onRefresh={refetch}
+            />
+          ) : (
+            <motion.div
+              key="list"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              {/* Welcome section */}
+              <div className="mb-8">
+                <h1 className="mb-2 text-2xl font-bold text-foreground md:text-3xl">
+                  Good{" "}
+                  {new Date().getHours() < 12
+                    ? "morning"
+                    : new Date().getHours() < 18
+                    ? "afternoon"
+                    : "evening"}
+                  !
+                </h1>
+                <p className="text-muted-foreground">
+                  Here's what's happening with your watchlist today.
+                </p>
+              </div>
 
-          {/* Stats cards */}
-          {totalStocks > 0 && (
-            <div className="mb-8 grid gap-4 sm:grid-cols-3">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="rounded-xl border border-border bg-card p-4"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary">
-                    <LayoutGrid className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total Stocks</p>
-                    <p className="text-2xl font-bold text-foreground">
-                      {totalStocks}
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
+              {/* Stats cards */}
+              {totalStocks > 0 && (
+                <div className="mb-8 grid gap-4 sm:grid-cols-3">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className="rounded-xl border border-border bg-card p-4"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary">
+                        <LayoutGrid className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Total Stocks</p>
+                        <p className="text-2xl font-bold text-foreground">
+                          {totalStocks}
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 }}
-                className="rounded-xl border border-border bg-card p-4"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10">
-                    <TrendingUp className="h-5 w-5 text-accent" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Gainers</p>
-                    <p className="text-2xl font-bold text-accent">{gainers}</p>
-                  </div>
-                </div>
-              </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15 }}
+                    className="rounded-xl border border-border bg-card p-4"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10">
+                        <TrendingUp className="h-5 w-5 text-accent" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Gainers</p>
+                        <p className="text-2xl font-bold text-accent">{gainers}</p>
+                      </div>
+                    </div>
+                  </motion.div>
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="rounded-xl border border-border bg-card p-4"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-destructive/10">
-                    <AlertCircle className="h-5 w-5 text-destructive" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Losers</p>
-                    <p className="text-2xl font-bold text-destructive">{losers}</p>
-                  </div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="rounded-xl border border-border bg-card p-4"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-destructive/10">
+                        <AlertCircle className="h-5 w-5 text-destructive" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Losers</p>
+                        <p className="text-2xl font-bold text-destructive">{losers}</p>
+                      </div>
+                    </div>
+                  </motion.div>
                 </div>
-              </motion.div>
-            </div>
+              )}
+
+              {/* Watchlist */}
+              <Watchlist
+                stocks={stocks}
+                loading={stocksLoading}
+                onAddStock={handleAddStock}
+                onRemoveStock={removeStock}
+                onRefresh={handleRefreshAll}
+                onViewDetails={handleViewDetails}
+              />
+            </motion.div>
           )}
-
-          {/* Watchlist */}
-          <Watchlist
-            stocks={stocks}
-            loading={stocksLoading}
-            onAddStock={addStock}
-            onRemoveStock={removeStock}
-            onRefresh={refreshPrices}
-          />
-        </motion.div>
+        </AnimatePresence>
       </main>
     </div>
   );
