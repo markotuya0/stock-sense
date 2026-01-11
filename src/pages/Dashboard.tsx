@@ -1,36 +1,60 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
+import { useStocks } from "@/hooks/useStocks";
+import { Watchlist } from "@/components/dashboard/Watchlist";
 import { Button } from "@/components/ui/button";
 import {
   TrendingUp,
   LogOut,
-  Plus,
   Bell,
   Settings,
   Loader2,
+  Moon,
+  Sun,
+  LayoutGrid,
+  AlertCircle,
 } from "lucide-react";
 
 const Dashboard = () => {
-  const { user, loading, signOut } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
+  const [isDark, setIsDark] = useState(false);
+  const {
+    stocks,
+    loading: stocksLoading,
+    addStock,
+    removeStock,
+    refreshPrices,
+  } = useStocks();
+
+  // Check initial theme
+  useEffect(() => {
+    setIsDark(document.documentElement.classList.contains("dark"));
+  }, []);
 
   // Redirect if not authenticated
   useEffect(() => {
-    if (!loading && !user) {
+    if (!authLoading && !user) {
       navigate("/auth");
     }
-  }, [user, loading, navigate]);
+  }, [user, authLoading, navigate]);
 
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
   };
 
-  if (loading) {
+  const toggleTheme = () => {
+    const newIsDark = !isDark;
+    setIsDark(newIsDark);
+    document.documentElement.classList.toggle("dark", newIsDark);
+  };
+
+  if (authLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -41,6 +65,15 @@ const Dashboard = () => {
   if (!user) {
     return null;
   }
+
+  // Calculate summary stats
+  const totalStocks = stocks.length;
+  const gainers = stocks.filter(
+    (s) => (s.latestPrice?.change_percent ?? 0) > 0
+  ).length;
+  const losers = stocks.filter(
+    (s) => (s.latestPrice?.change_percent ?? 0) < 0
+  ).length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -54,7 +87,37 @@ const Dashboard = () => {
             <span className="text-xl font-bold text-foreground">SignalDeck</span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              className="rounded-full"
+            >
+              <AnimatePresence mode="wait">
+                {isDark ? (
+                  <motion.div
+                    key="sun"
+                    initial={{ rotate: -90, opacity: 0 }}
+                    animate={{ rotate: 0, opacity: 1 }}
+                    exit={{ rotate: 90, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Sun className="h-5 w-5" />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="moon"
+                    initial={{ rotate: 90, opacity: 0 }}
+                    animate={{ rotate: 0, opacity: 1 }}
+                    exit={{ rotate: -90, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Moon className="h-5 w-5" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </Button>
             <Button variant="ghost" size="icon" className="hidden md:flex">
               <Bell className="h-5 w-5" />
             </Button>
@@ -63,7 +126,7 @@ const Dashboard = () => {
             </Button>
             <Button variant="ghost" size="sm" onClick={handleSignOut}>
               <LogOut className="mr-2 h-4 w-4" />
-              Sign Out
+              <span className="hidden sm:inline">Sign Out</span>
             </Button>
           </div>
         </div>
@@ -79,68 +142,85 @@ const Dashboard = () => {
           {/* Welcome section */}
           <div className="mb-8">
             <h1 className="mb-2 text-2xl font-bold text-foreground md:text-3xl">
-              Welcome back!
+              Good{" "}
+              {new Date().getHours() < 12
+                ? "morning"
+                : new Date().getHours() < 18
+                ? "afternoon"
+                : "evening"}
+              !
             </h1>
             <p className="text-muted-foreground">
-              Signed in as {user.email}
+              Here's what's happening with your watchlist today.
             </p>
           </div>
 
-          {/* Empty state for watchlist */}
-          <div className="rounded-2xl border border-dashed border-border bg-card/50 p-12 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-secondary">
-              <TrendingUp className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <h2 className="mb-2 text-xl font-semibold text-foreground">
-              Your Watchlist is Empty
-            </h2>
-            <p className="mb-6 text-muted-foreground">
-              Start tracking stocks by adding them to your watchlist.
-            </p>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Add Your First Stock
-            </Button>
-          </div>
-
-          {/* Coming soon features */}
-          <div className="mt-12 grid gap-6 md:grid-cols-3">
-            {[
-              {
-                title: "Stock Tracking",
-                description: "Multi-source price data with cross-validation",
-                status: "Coming soon",
-              },
-              {
-                title: "News Aggregation",
-                description: "Headlines from Yahoo, Google, CNBC & more",
-                status: "Coming soon",
-              },
-              {
-                title: "AI Insights",
-                description: "Plain English summaries and explanations",
-                status: "Coming soon",
-              },
-            ].map((feature, index) => (
+          {/* Stats cards */}
+          {totalStocks > 0 && (
+            <div className="mb-8 grid gap-4 sm:grid-cols-3">
               <motion.div
-                key={feature.title}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 * (index + 1) }}
-                className="rounded-xl border border-border bg-card p-6"
+                transition={{ delay: 0.1 }}
+                className="rounded-xl border border-border bg-card p-4"
               >
-                <div className="mb-2 inline-block rounded-full bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground">
-                  {feature.status}
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary">
+                    <LayoutGrid className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total Stocks</p>
+                    <p className="text-2xl font-bold text-foreground">
+                      {totalStocks}
+                    </p>
+                  </div>
                 </div>
-                <h3 className="mb-1 font-semibold text-foreground">
-                  {feature.title}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {feature.description}
-                </p>
               </motion.div>
-            ))}
-          </div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+                className="rounded-xl border border-border bg-card p-4"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10">
+                    <TrendingUp className="h-5 w-5 text-accent" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Gainers</p>
+                    <p className="text-2xl font-bold text-accent">{gainers}</p>
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="rounded-xl border border-border bg-card p-4"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-destructive/10">
+                    <AlertCircle className="h-5 w-5 text-destructive" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Losers</p>
+                    <p className="text-2xl font-bold text-destructive">{losers}</p>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+
+          {/* Watchlist */}
+          <Watchlist
+            stocks={stocks}
+            loading={stocksLoading}
+            onAddStock={addStock}
+            onRemoveStock={removeStock}
+            onRefresh={refreshPrices}
+          />
         </motion.div>
       </main>
     </div>
