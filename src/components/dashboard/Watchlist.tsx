@@ -1,12 +1,11 @@
-"use client";
-
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { StockWithPrice } from "@/types/database";
 import { StockCard } from "./StockCard";
 import { AddStockDialog } from "./AddStockDialog";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, RefreshCw, Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { TrendingUp, RefreshCw } from "lucide-react";
 
 interface WatchlistProps {
   stocks: StockWithPrice[];
@@ -16,6 +15,40 @@ interface WatchlistProps {
   onRefresh: () => void;
   onViewDetails?: (stockId: string) => void;
 }
+
+const WatchlistSkeleton = () => (
+  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    {Array.from({ length: 4 }).map((_, i) => (
+      <div key={i} className="rounded-xl border border-border bg-card p-4 pl-5">
+        <div className="mb-3 flex items-start gap-3">
+          <Skeleton className="h-10 w-10 rounded-lg" />
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-3 w-24" />
+          </div>
+        </div>
+        <div className="mb-4 flex items-baseline justify-between">
+          <Skeleton className="h-8 w-24" />
+          <Skeleton className="h-6 w-16 rounded-full" />
+        </div>
+        <div className="grid grid-cols-3 gap-2 border-t border-border pt-3">
+          <div className="space-y-1">
+            <Skeleton className="h-3 w-12" />
+            <Skeleton className="h-4 w-16" />
+          </div>
+          <div className="space-y-1">
+            <Skeleton className="h-3 w-12" />
+            <Skeleton className="h-4 w-16" />
+          </div>
+          <div className="space-y-1">
+            <Skeleton className="h-3 w-12" />
+            <Skeleton className="h-4 w-16" />
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+);
 
 export const Watchlist: React.FC<WatchlistProps> = ({
   stocks,
@@ -27,8 +60,14 @@ export const Watchlist: React.FC<WatchlistProps> = ({
 }) => {
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div>
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <Skeleton className="h-6 w-32 mb-1" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+        </div>
+        <WatchlistSkeleton />
       </div>
     );
   }
@@ -56,7 +95,6 @@ export const Watchlist: React.FC<WatchlistProps> = ({
 
   return (
     <div>
-      {/* Header */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold text-foreground md:text-xl">
@@ -75,7 +113,6 @@ export const Watchlist: React.FC<WatchlistProps> = ({
         </div>
       </div>
 
-      {/* Stock grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <AnimatePresence mode="popLayout">
           {stocks.map((stock, index) => (

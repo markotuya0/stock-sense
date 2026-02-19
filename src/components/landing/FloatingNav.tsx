@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -20,9 +18,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = ({ className }) => {
       setIsScrolled(window.scrollY > 50);
     };
 
-    // Check initial theme
-    const isDarkMode = document.documentElement.classList.contains("dark");
-    setIsDark(isDarkMode);
+    setIsDark(document.documentElement.classList.contains("dark"));
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
@@ -53,7 +49,6 @@ export const FloatingNav: React.FC<FloatingNavProps> = ({ className }) => {
       )}
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 md:px-8">
-        {/* Logo */}
         <a href="#" className="flex items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
             <TrendingUp className="h-5 w-5 text-primary-foreground" />
@@ -61,7 +56,6 @@ export const FloatingNav: React.FC<FloatingNavProps> = ({ className }) => {
           <span className="text-xl font-bold text-foreground">SignalDeck</span>
         </a>
 
-        {/* Desktop Navigation */}
         <div className="hidden items-center gap-8 md:flex">
           {navItems.map((item) => (
             <a
@@ -74,7 +68,6 @@ export const FloatingNav: React.FC<FloatingNavProps> = ({ className }) => {
           ))}
         </div>
 
-        {/* Right side */}
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
@@ -111,7 +104,6 @@ export const FloatingNav: React.FC<FloatingNavProps> = ({ className }) => {
             <a href="/auth">Enter Dashboard</a>
           </Button>
 
-          {/* Mobile menu button */}
           <Button
             variant="ghost"
             size="icon"
@@ -127,7 +119,6 @@ export const FloatingNav: React.FC<FloatingNavProps> = ({ className }) => {
         </div>
       </div>
 
-      {/* Mobile Menu */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div

@@ -1,10 +1,9 @@
-"use client";
-
 import React from "react";
 import { motion } from "framer-motion";
 import { TrendingUp, TrendingDown, Activity, Bell } from "lucide-react";
 
 export const DashboardPreview: React.FC = () => {
+  // Static preview data for the landing page illustration
   const stocks = [
     { symbol: "AAPL", name: "Apple Inc.", price: 178.72, change: 2.34, isUp: true },
     { symbol: "TSLA", name: "Tesla, Inc.", price: 248.50, change: -3.21, isUp: false },
@@ -14,7 +13,6 @@ export const DashboardPreview: React.FC = () => {
 
   return (
     <div className="flex h-[400px] flex-col bg-background p-4 md:h-[500px] md:p-6">
-      {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-foreground md:text-xl">
@@ -32,7 +30,6 @@ export const DashboardPreview: React.FC = () => {
         </div>
       </div>
 
-      {/* Stock cards */}
       <div className="grid flex-1 gap-3 md:grid-cols-2">
         {stocks.map((stock, index) => (
           <motion.div
@@ -75,7 +72,6 @@ export const DashboardPreview: React.FC = () => {
         ))}
       </div>
 
-      {/* AI Insight preview */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -89,8 +85,8 @@ export const DashboardPreview: React.FC = () => {
           <div>
             <p className="text-sm font-medium text-foreground">AI Insight</p>
             <p className="text-xs text-muted-foreground">
-              AAPL shows strong momentum with positive sentiment across 12 news
-              sources. Consider reviewing the latest earnings report.
+              AAPL shows strong momentum with positive sentiment across recent
+              news sources. Review the latest headlines for more context.
             </p>
           </div>
         </div>

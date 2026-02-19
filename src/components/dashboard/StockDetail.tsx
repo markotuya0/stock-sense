@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +7,7 @@ import { StockWithPrice, NewsArticle, Note, AIInsight } from "@/types/database";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   TrendingUp,
@@ -32,6 +31,17 @@ interface StockDetailProps {
   onRefresh: () => void;
 }
 
+const DetailSkeleton = () => (
+  <div className="space-y-4">
+    {Array.from({ length: 3 }).map((_, i) => (
+      <div key={i} className="rounded-xl border border-border bg-card p-4">
+        <Skeleton className="h-4 w-24 mb-2" />
+        <Skeleton className="h-6 w-32" />
+      </div>
+    ))}
+  </div>
+);
+
 export const StockDetail: React.FC<StockDetailProps> = ({
   stock,
   onBack,
@@ -53,21 +63,23 @@ export const StockDetail: React.FC<StockDetailProps> = ({
   const [loadingAI, setLoadingAI] = useState(false);
   const [savingNote, setSavingNote] = useState(false);
   const [askingQuestion, setAskingQuestion] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   const price = stock.latestPrice;
   const isPositive = (price?.change_percent ?? 0) >= 0;
 
-  // Load data on mount
   useEffect(() => {
-    loadNews();
-    loadNotes();
-    loadInsights();
+    const loadAll = async () => {
+      setInitialLoading(true);
+      await Promise.all([loadNews(), loadNotes(), loadInsights()]);
+      setInitialLoading(false);
+    };
+    loadAll();
   }, [stock.id]);
 
   const loadNews = async () => {
     setLoadingNews(true);
     try {
-      // First try to get from database
       const { data: dbNews } = await supabase
         .from("news_articles")
         .select("*")
@@ -78,11 +90,10 @@ export const StockDetail: React.FC<StockDetailProps> = ({
       if (dbNews && dbNews.length > 0) {
         setNews(dbNews as unknown as NewsArticle[]);
       } else {
-        // Fetch fresh news
         await refreshNews();
       }
-    } catch (error) {
-      console.error("Error loading news:", error);
+    } catch {
+      // Silently fail — empty state will show
     } finally {
       setLoadingNews(false);
     }
@@ -93,7 +104,6 @@ export const StockDetail: React.FC<StockDetailProps> = ({
     try {
       const articles = await fetchNews(stock.ticker, stock.id);
       if (articles.length > 0) {
-        // Reload from database after fetching
         const { data } = await supabase
           .from("news_articles")
           .select("*")
@@ -105,8 +115,12 @@ export const StockDetail: React.FC<StockDetailProps> = ({
           setNews(data as unknown as NewsArticle[]);
         }
       }
-    } catch (error) {
-      console.error("Error refreshing news:", error);
+    } catch {
+      toast({
+        variant: "destructive",
+        title: "Failed to fetch news",
+        description: "Could not load news articles. Try again later.",
+      });
     } finally {
       setLoadingNews(false);
     }
@@ -121,8 +135,11 @@ export const StockDetail: React.FC<StockDetailProps> = ({
         title: "Price updated",
         description: `Latest price fetched for ${stock.ticker}`,
       });
-    } catch (error) {
-      console.error("Error refreshing price:", error);
+    } catch {
+      toast({
+        variant: "destructive",
+        title: "Failed to refresh price",
+      });
     } finally {
       setLoadingPrices(false);
     }
@@ -139,8 +156,8 @@ export const StockDetail: React.FC<StockDetailProps> = ({
       if (data) {
         setNotes(data as unknown as Note[]);
       }
-    } catch (error) {
-      console.error("Error loading notes:", error);
+    } catch {
+      // Silently fail
     }
   };
 
@@ -156,8 +173,8 @@ export const StockDetail: React.FC<StockDetailProps> = ({
       if (data) {
         setInsights(data as unknown as AIInsight[]);
       }
-    } catch (error) {
-      console.error("Error loading insights:", error);
+    } catch {
+      // Silently fail
     }
   };
 
@@ -180,8 +197,7 @@ export const StockDetail: React.FC<StockDetailProps> = ({
         title: "Note saved",
         description: "Your note has been added",
       });
-    } catch (error) {
-      console.error("Error saving note:", error);
+    } catch {
       toast({
         variant: "destructive",
         title: "Failed to save note",
@@ -357,7 +373,7 @@ export const StockDetail: React.FC<StockDetailProps> = ({
       </div>
 
       {/* Price Card */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
         <div className="rounded-xl border border-border bg-card p-4">
           <p className="text-sm text-muted-foreground">Current Price</p>
           <p className="text-3xl font-bold text-foreground">
@@ -386,134 +402,143 @@ export const StockDetail: React.FC<StockDetailProps> = ({
 
       {/* Tabs */}
       <Tabs defaultValue="ai" className="space-y-4">
-        <TabsList>
+        <TabsList className="w-full sm:w-auto">
           <TabsTrigger value="ai" className="gap-2">
             <Sparkles className="h-4 w-4" />
-            AI Insights
+            <span className="hidden sm:inline">AI Insights</span>
+            <span className="sm:hidden">AI</span>
           </TabsTrigger>
           <TabsTrigger value="news" className="gap-2">
             <Newspaper className="h-4 w-4" />
-            News ({news.length})
+            <span className="hidden sm:inline">News ({news.length})</span>
+            <span className="sm:hidden">News</span>
           </TabsTrigger>
           <TabsTrigger value="notes" className="gap-2">
             <FileText className="h-4 w-4" />
-            Notes ({notes.length})
+            <span className="hidden sm:inline">Notes ({notes.length})</span>
+            <span className="sm:hidden">Notes</span>
           </TabsTrigger>
         </TabsList>
 
         {/* AI Insights Tab */}
         <TabsContent value="ai" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <Button
-              variant="outline"
-              onClick={summarizeNews}
-              disabled={loadingAI || news.length === 0}
-              className="h-auto justify-start p-4"
-            >
-              <Newspaper className="mr-3 h-5 w-5 text-accent" />
-              <div className="text-left">
-                <p className="font-medium">Summarize News</p>
-                <p className="text-xs text-muted-foreground">
-                  Get a plain-English summary of recent headlines
-                </p>
-              </div>
-            </Button>
-            <Button
-              variant="outline"
-              onClick={explainMovement}
-              disabled={loadingAI}
-              className="h-auto justify-start p-4"
-            >
-              <TrendingUp className="mr-3 h-5 w-5 text-accent" />
-              <div className="text-left">
-                <p className="font-medium">Explain Movement</p>
-                <p className="text-xs text-muted-foreground">
-                  Understand why the price changed
-                </p>
-              </div>
-            </Button>
-          </div>
-
-          {/* Ask a question */}
-          <div className="rounded-xl border border-border bg-card p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <MessageSquare className="h-5 w-5 text-accent" />
-              <h3 className="font-medium">Ask a Question</h3>
-            </div>
-            <div className="flex gap-2">
-              <Input
-                placeholder={`Ask anything about ${stock.ticker}...`}
-                value={question}
-                onChange={(e) => setQuestion(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && askQuestion()}
-              />
-              <Button onClick={askQuestion} disabled={askingQuestion || !question.trim()}>
-                {askingQuestion ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-          </div>
-
-          {/* AI Response */}
-          {(loadingAI || aiResponse) && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="rounded-xl border border-accent/20 bg-accent/5 p-4"
-            >
-              <div className="flex items-start gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent/10">
-                  <Sparkles className="h-4 w-4 text-accent" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground mb-2">AI Insight</p>
-                  {loadingAI ? (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Analyzing...
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                      {aiResponse}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Previous insights */}
-          {insights.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="text-sm font-medium text-muted-foreground">Previous Insights</h3>
-              {insights.slice(0, 3).map((insight) => (
-                <div
-                  key={insight.id}
-                  className="rounded-lg border border-border bg-card/50 p-3"
+          {initialLoading ? (
+            <DetailSkeleton />
+          ) : (
+            <>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Button
+                  variant="outline"
+                  onClick={summarizeNews}
+                  disabled={loadingAI || news.length === 0}
+                  className="h-auto justify-start p-4"
                 >
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs capitalize text-accent">
-                      {insight.insight_type.replace("_", " ")}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(insight.created_at).toLocaleDateString()}
-                    </span>
+                  <Newspaper className="mr-3 h-5 w-5 shrink-0 text-accent" />
+                  <div className="text-left">
+                    <p className="font-medium">Summarize News</p>
+                    <p className="text-xs text-muted-foreground">
+                      Get a plain-English summary of recent headlines
+                    </p>
                   </div>
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {insight.response}
-                  </p>
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={explainMovement}
+                  disabled={loadingAI}
+                  className="h-auto justify-start p-4"
+                >
+                  <TrendingUp className="mr-3 h-5 w-5 shrink-0 text-accent" />
+                  <div className="text-left">
+                    <p className="font-medium">Explain Movement</p>
+                    <p className="text-xs text-muted-foreground">
+                      Understand why the price changed
+                    </p>
+                  </div>
+                </Button>
+              </div>
+
+              {/* Ask a question */}
+              <div className="rounded-xl border border-border bg-card p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <MessageSquare className="h-5 w-5 text-accent" />
+                  <h3 className="font-medium">Ask a Question</h3>
                 </div>
-              ))}
-            </div>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder={`Ask anything about ${stock.ticker}...`}
+                    value={question}
+                    onChange={(e) => setQuestion(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && askQuestion()}
+                  />
+                  <Button onClick={askQuestion} disabled={askingQuestion || !question.trim()}>
+                    {askingQuestion ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {/* AI Response */}
+              {(loadingAI || aiResponse) && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="rounded-xl border border-accent/20 bg-accent/5 p-4"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent/10">
+                      <Sparkles className="h-4 w-4 text-accent" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground mb-2">AI Insight</p>
+                      {loadingAI ? (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Analyzing...
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words">
+                          {aiResponse}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Previous insights */}
+              {insights.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-sm font-medium text-muted-foreground">Previous Insights</h3>
+                  {insights.slice(0, 3).map((insight) => (
+                    <div
+                      key={insight.id}
+                      className="rounded-lg border border-border bg-card/50 p-3"
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs capitalize text-accent">
+                          {insight.insight_type.replace("_", " ")}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(insight.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {insight.response}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </TabsContent>
 
         {/* News Tab */}
         <TabsContent value="news" className="space-y-4">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-wrap justify-between items-center gap-2">
             <p className="text-sm text-muted-foreground">
               Latest news from Yahoo Finance, CNBC, and MarketWatch
             </p>
@@ -528,8 +553,17 @@ export const StockDetail: React.FC<StockDetailProps> = ({
           </div>
 
           {loadingNews ? (
-            <div className="flex h-32 items-center justify-center">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="rounded-xl border border-border bg-card p-4">
+                  <div className="flex gap-2 mb-2">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-4 w-16 rounded-full" />
+                  </div>
+                  <Skeleton className="h-5 w-full mb-1" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+              ))}
             </div>
           ) : news.length === 0 ? (
             <div className="rounded-xl border border-dashed border-border p-8 text-center">
@@ -543,14 +577,14 @@ export const StockDetail: React.FC<StockDetailProps> = ({
             <div className="space-y-3">
               {news.map((article, index) => (
                 <motion.div
-                  key={index}
+                  key={article.id || index}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
                   className="rounded-xl border border-border bg-card p-4 hover:border-accent/50 transition-colors"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-xs font-medium text-muted-foreground">
                           {article.source}

@@ -1,73 +1,84 @@
-# Welcome to your Lovable project
+# SignalDeck
 
-## Project info
+A personal AI-powered stock tracking dashboard that aggregates market data, news, and AI insights — helping you stay informed without the noise.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## What It Does
 
-## How can I edit this code?
+- **Stock Watchlist** — Track stocks with real-time prices, % change, and 52-week ranges from Yahoo Finance
+- **News Aggregation** — Headlines from Yahoo Finance, CNBC, and MarketWatch with basic sentiment analysis
+- **AI Insights** — Summarize news, explain price movements, and ask questions in plain English (powered by Google Gemini)
+- **Personal Notes** — Journal your thoughts on each stock
+- **Private Access** — Single-user dashboard with email/password authentication
 
-There are several ways of editing your application.
+## Tech Stack
 
-**Use Lovable**
+- **Frontend:** React, TypeScript, Vite, Tailwind CSS, shadcn/ui, Framer Motion
+- **Backend:** Lovable Cloud (Supabase) — PostgreSQL, Edge Functions, Auth
+- **AI:** Lovable AI Gateway (Google Gemini 2.5 Flash)
+- **Data Sources:** Yahoo Finance API, RSS feeds (CNBC, MarketWatch)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## Features
 
-Changes made via Lovable will be committed automatically to this repo.
+| Feature | Status |
+|---|---|
+| Stock watchlist (add/remove) | ✅ |
+| Real-time price data | ✅ |
+| 52-week high/low | ✅ |
+| News aggregation with sentiment | ✅ |
+| AI news summaries | ✅ |
+| AI movement explanations | ✅ |
+| AI Q&A per stock | ✅ |
+| Personal notes per stock | ✅ |
+| Dark/light mode | ✅ |
+| Mobile responsive | ✅ |
+| Email/password auth | ✅ |
 
-**Use your preferred IDE**
+## Running Locally
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
+```bash
+# Clone the repository
 git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
 cd <YOUR_PROJECT_NAME>
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Install dependencies
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start the dev server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Environment Variables
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+The following are required and automatically configured by Lovable Cloud:
 
-**Use GitHub Codespaces**
+- `VITE_SUPABASE_URL` — Backend URL
+- `VITE_SUPABASE_PUBLISHABLE_KEY` — Public API key
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Edge function secrets (configured in Lovable Cloud):
 
-## What technologies are used for this project?
+- `LOVABLE_API_KEY` — For AI insights
+- `SUPABASE_SERVICE_ROLE_KEY` — For server-side database operations
 
-This project is built with:
+## Architecture
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```
+src/
+├── components/
+│   ├── dashboard/    # StockCard, StockDetail, Watchlist, AddStockDialog
+│   ├── landing/      # FloatingNav, ContainerScroll, FeatureCard, etc.
+│   └── ui/           # shadcn/ui components
+├── contexts/         # AuthContext
+├── hooks/            # useStocks, useStockData
+├── pages/            # Index, Auth, Dashboard, NotFound
+└── types/            # Database types
 
-## How can I deploy this project?
+supabase/
+└── functions/
+    ├── fetch-stock-data/   # Yahoo Finance price fetcher
+    ├── fetch-news/         # RSS news aggregator
+    └── ai-insights/        # AI summary & Q&A
+```
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## License
 
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Personal use only.

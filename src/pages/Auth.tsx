@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -17,7 +15,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { TrendingUp, ArrowLeft, Loader2 } from "lucide-react";
+import { TrendingUp, ArrowLeft, Loader2, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const authSchema = z.object({
@@ -33,6 +31,7 @@ type AuthFormData = z.infer<typeof authSchema>;
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const { signIn, signUp, user, loading } = useAuth();
   const { toast } = useToast();
@@ -45,7 +44,6 @@ const Auth = () => {
     },
   });
 
-  // Redirect if already authenticated
   useEffect(() => {
     if (!loading && user) {
       navigate("/dashboard");
@@ -74,7 +72,6 @@ const Auth = () => {
       } else {
         const { error } = await signUp(data.email, data.password);
         if (error) {
-          // Handle specific error cases
           if (error.message.includes("already registered")) {
             toast({
               variant: "destructive",
@@ -112,7 +109,6 @@ const Auth = () => {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-background px-4">
-      {/* Background decoration */}
       <div className="absolute inset-0 bg-grid-pattern opacity-30" />
       <div className="absolute inset-0 bg-radial-glow" />
 
@@ -122,7 +118,6 @@ const Auth = () => {
         transition={{ duration: 0.5 }}
         className="relative w-full max-w-md"
       >
-        {/* Back link */}
         <a
           href="/"
           className="mb-8 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -131,9 +126,7 @@ const Auth = () => {
           Back to home
         </a>
 
-        {/* Card */}
         <div className="rounded-2xl border border-border bg-card p-8 shadow-lg">
-          {/* Logo */}
           <div className="mb-8 flex items-center justify-center gap-2">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
               <TrendingUp className="h-5 w-5 text-primary-foreground" />
@@ -143,7 +136,6 @@ const Auth = () => {
             </span>
           </div>
 
-          {/* Title */}
           <div className="mb-6 text-center">
             <h1 className="mb-2 text-2xl font-bold text-foreground">
               {isLogin ? "Welcome back" : "Create your account"}
@@ -155,7 +147,6 @@ const Auth = () => {
             </p>
           </div>
 
-          {/* Form */}
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
@@ -184,14 +175,30 @@ const Auth = () => {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="••••••••"
-                        autoComplete={
-                          isLogin ? "current-password" : "new-password"
-                        }
-                        {...field}
-                      />
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          placeholder="••••••••"
+                          autoComplete={
+                            isLogin ? "current-password" : "new-password"
+                          }
+                          className="pr-10"
+                          {...field}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          tabIndex={-1}
+                          aria-label={showPassword ? "Hide password" : "Show password"}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -217,7 +224,6 @@ const Auth = () => {
             </form>
           </Form>
 
-          {/* Toggle */}
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
               {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
@@ -225,6 +231,7 @@ const Auth = () => {
                 type="button"
                 onClick={() => {
                   setIsLogin(!isLogin);
+                  setShowPassword(false);
                   form.reset();
                 }}
                 className="font-medium text-foreground underline-offset-4 hover:underline"
@@ -235,7 +242,6 @@ const Auth = () => {
           </div>
         </div>
 
-        {/* Note about private access */}
         <p className="mt-6 text-center text-xs text-muted-foreground">
           This is a private application.
           <br />
