@@ -1,5 +1,3 @@
-"use client";
-
 import React from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -13,10 +11,8 @@ import {
   TrendingUp,
   Newspaper,
   Sparkles,
-  Bell,
   Shield,
   BarChart3,
-  Zap,
   Brain,
   LineChart,
   ArrowRight,
@@ -27,13 +23,13 @@ const Index = () => {
     {
       number: "1",
       title: "Track Stocks",
-      description: "Add stocks to your watchlist and monitor prices from multiple data sources",
+      description: "Add stocks to your watchlist and monitor real-time prices from Yahoo Finance",
       icon: <LineChart className="h-10 w-10" />,
     },
     {
       number: "2",
       title: "Aggregate News",
-      description: "Pull news from Yahoo, Google, CNBC, and MarketWatch automatically",
+      description: "Pull news from Yahoo Finance, CNBC, and MarketWatch automatically",
       icon: <Newspaper className="h-10 w-10" />,
     },
     {
@@ -45,7 +41,7 @@ const Index = () => {
     {
       number: "4",
       title: "Make Decisions",
-      description: "Stay informed with calm, intentional alerts—no noise, just signal",
+      description: "Stay informed with clear data and context—no noise, just signal",
       icon: <TrendingUp className="h-10 w-10" />,
     },
   ];
@@ -53,33 +49,21 @@ const Index = () => {
   const features = [
     {
       icon: <BarChart3 className="h-6 w-6" />,
-      title: "Multi-Source Stock Data",
+      title: "Real-Time Stock Data",
       description:
-        "Aggregate prices from Yahoo Finance, Alpha Vantage, and more. Cross-check for accuracy.",
+        "Track prices from Yahoo Finance with 52-week ranges, volume, and percentage changes.",
     },
     {
       icon: <Newspaper className="h-6 w-6" />,
       title: "News Aggregation",
       description:
-        "Pull headlines from major sources with sentiment analysis. Know the consensus.",
+        "Pull headlines from Yahoo Finance, CNBC, and MarketWatch with sentiment analysis.",
     },
     {
       icon: <Sparkles className="h-6 w-6" />,
       title: "AI Summaries",
       description:
         "Get plain-English explanations of market movements. Ask follow-up questions.",
-    },
-    {
-      icon: <Bell className="h-6 w-6" />,
-      title: "Smart Alerts",
-      description:
-        "Receive calm, intentional notifications. No spam—max 1-2 per day.",
-    },
-    {
-      icon: <Zap className="h-6 w-6" />,
-      title: "Signal Detection",
-      description:
-        "Detect unusual volume, price drops, and news spikes automatically.",
     },
     {
       icon: <Shield className="h-6 w-6" />,
@@ -194,7 +178,7 @@ const Index = () => {
             </p>
           </motion.div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
             {features.map((feature, index) => (
               <FeatureCard
                 key={feature.title}
@@ -244,7 +228,7 @@ const Index = () => {
             <span className="font-semibold text-foreground">SignalDeck</span>
           </div>
           <p className="text-sm text-muted-foreground">
-            © 2024 SignalDeck. Personal use only.
+            © {new Date().getFullYear()} SignalDeck. Personal use only.
           </p>
         </div>
       </footer>

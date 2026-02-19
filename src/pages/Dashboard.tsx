@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -46,7 +44,7 @@ const Dashboard = () => {
   // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate("/auth");
+      navigate("/");
     }
   }, [user, authLoading, navigate]);
 

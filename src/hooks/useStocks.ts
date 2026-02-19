@@ -87,16 +87,12 @@ export function useStocks() {
           .select()
           .single();
 
-        if (error) {
+      if (error) {
           if (error.code === "23505") {
             return { error: new Error(`${upperTicker} is already in your watchlist`) };
           }
           throw error;
         }
-
-        // Add mock price data for now (will be replaced with real API later)
-        const mockPrice = generateMockPrice(data.id);
-        await supabase.from("stock_prices").insert(mockPrice);
 
         // Refetch to get the stock with price
         await fetchStocks();
@@ -178,21 +174,3 @@ export function useStocks() {
   };
 }
 
-// Helper function to generate mock price data
-function generateMockPrice(stockId: string) {
-  const basePrice = Math.random() * 400 + 50; // Random price between 50-450
-  const changePercent = (Math.random() - 0.5) * 10; // Random change -5% to +5%
-  const changeAmount = basePrice * (changePercent / 100);
-  
-  return {
-    stock_id: stockId,
-    price: Math.round(basePrice * 100) / 100,
-    change_percent: Math.round(changePercent * 100) / 100,
-    change_amount: Math.round(changeAmount * 100) / 100,
-    volume: Math.floor(Math.random() * 50000000) + 1000000,
-    high_52w: Math.round((basePrice * 1.3) * 100) / 100,
-    low_52w: Math.round((basePrice * 0.7) * 100) / 100,
-    market_cap: Math.floor(Math.random() * 2000000000000) + 10000000000,
-    source: "mock",
-  };
-}

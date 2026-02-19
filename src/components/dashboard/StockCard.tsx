@@ -1,5 +1,3 @@
-"use client";
-
 import React from "react";
 import { motion } from "framer-motion";
 import { StockWithPrice } from "@/types/database";
@@ -15,8 +13,6 @@ import {
   TrendingDown,
   MoreVertical,
   Trash2,
-  Bell,
-  FileText,
   ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -67,7 +63,6 @@ export const StockCard: React.FC<StockCardProps> = ({
       transition={{ duration: 0.3, delay: index * 0.05 }}
       className="group relative overflow-hidden rounded-xl border border-border bg-card transition-all hover:border-accent/50 hover:shadow-lg"
     >
-      {/* Accent bar based on price change */}
       <div
         className={cn(
           "absolute left-0 top-0 h-full w-1 transition-colors",
@@ -76,9 +71,11 @@ export const StockCard: React.FC<StockCardProps> = ({
       />
 
       <div className="p-4 pl-5">
-        {/* Header with ticker and actions */}
         <div className="mb-3 flex items-start justify-between">
-          <div className="flex items-center gap-3">
+          <div
+            className="flex items-center gap-3 cursor-pointer"
+            onClick={() => onViewDetails?.(stock.id)}
+          >
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-sm font-bold text-foreground">
               {stock.ticker.slice(0, 2)}
             </div>
@@ -105,14 +102,6 @@ export const StockCard: React.FC<StockCardProps> = ({
                 <ExternalLink className="mr-2 h-4 w-4" />
                 View Details
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Bell className="mr-2 h-4 w-4" />
-                Set Alert
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <FileText className="mr-2 h-4 w-4" />
-                Add Note
-              </DropdownMenuItem>
               <DropdownMenuItem
                 className="text-destructive focus:text-destructive"
                 onClick={() => onRemove(stock.id)}
@@ -124,7 +113,6 @@ export const StockCard: React.FC<StockCardProps> = ({
           </DropdownMenu>
         </div>
 
-        {/* Price and change */}
         <div className="mb-4 flex items-baseline justify-between">
           <span className="text-2xl font-bold text-foreground">
             {formatPrice(price?.price)}
@@ -146,7 +134,6 @@ export const StockCard: React.FC<StockCardProps> = ({
           </div>
         </div>
 
-        {/* Stats grid */}
         <div className="grid grid-cols-3 gap-2 border-t border-border pt-3">
           <div>
             <p className="text-xs text-muted-foreground">52W High</p>
@@ -168,7 +155,6 @@ export const StockCard: React.FC<StockCardProps> = ({
           </div>
         </div>
 
-        {/* Source badge */}
         {price?.source && (
           <div className="mt-3 flex items-center gap-2">
             <span className="rounded bg-secondary px-2 py-0.5 text-xs text-muted-foreground">

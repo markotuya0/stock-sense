@@ -32,7 +32,7 @@ export function useStockData() {
     async (ticker: string, stockId?: string): Promise<StockQuote | null> => {
       try {
         setLoading(true);
-        console.log(`Fetching price for ${ticker}`);
+        
 
         const { data, error } = await supabase.functions.invoke("fetch-stock-data", {
           body: { ticker, stockId },
@@ -62,7 +62,7 @@ export function useStockData() {
   const fetchNews = useCallback(
     async (ticker: string, stockId?: string): Promise<NewsArticle[]> => {
       try {
-        console.log(`Fetching news for ${ticker}`);
+        
 
         const { data, error } = await supabase.functions.invoke("fetch-news", {
           body: { ticker, stockId },
@@ -95,7 +95,7 @@ export function useStockData() {
       question?: string
     ): Promise<string | null> => {
       try {
-        console.log(`Getting AI insight (${type}) for ${ticker}`);
+        
 
         const { data, error } = await supabase.functions.invoke("ai-insights", {
           body: { type, ticker, stockId, context, question },

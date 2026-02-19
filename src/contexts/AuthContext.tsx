@@ -13,7 +13,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Only allow this specific email to sign up/sign in
 const ALLOWED_EMAIL = "markotuya0@gmail.com";
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -24,16 +23,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
-    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -44,7 +41,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    // Check if email is allowed
     if (email.toLowerCase() !== ALLOWED_EMAIL.toLowerCase()) {
       return {
         error: new Error("This application is private. Access denied."),
@@ -64,7 +60,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const signUp = async (email: string, password: string) => {
-    // Check if email is allowed
     if (email.toLowerCase() !== ALLOWED_EMAIL.toLowerCase()) {
       return {
         error: new Error("This application is private. Access denied."),
