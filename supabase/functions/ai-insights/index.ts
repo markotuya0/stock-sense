@@ -20,13 +20,13 @@ interface AIRequest {
 }
 
 async function callAI(systemPrompt: string, userPrompt: string): Promise<string> {
-  const apiKey = Deno.env.get("LOVABLE_API_KEY");
+  const apiKey = Deno.env.get("AI_GATEWAY_API_KEY") || Deno.env.get("LOVABLE_API_KEY");
   
   if (!apiKey) {
-    throw new Error("LOVABLE_API_KEY is not configured");
+    throw new Error("AI_GATEWAY_API_KEY is not configured");
   }
 
-  console.log("Calling Lovable AI Gateway...");
+  console.log("Calling AI Gateway...");
 
   const response = await fetch(AI_GATEWAY_URL, {
     method: "POST",

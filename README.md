@@ -13,8 +13,8 @@ A personal AI-powered stock tracking dashboard that aggregates market data, news
 ## Tech Stack
 
 - **Frontend:** React, TypeScript, Vite, Tailwind CSS, shadcn/ui, Framer Motion
-- **Backend:** Lovable Cloud (Supabase) — PostgreSQL, Edge Functions, Auth
-- **AI:** Lovable AI Gateway (Google Gemini 2.5 Flash)
+- **Backend:** Supabase — PostgreSQL, Edge Functions, Auth
+- **AI:** AI Gateway (Google Gemini 2.5 Flash)
 - **Data Sources:** Yahoo Finance API, RSS feeds (CNBC, MarketWatch)
 
 ## Features
@@ -49,14 +49,14 @@ npm run dev
 
 ### Environment Variables
 
-The following are required and automatically configured by Lovable Cloud:
+The following are required environment variables:
 
 - `VITE_SUPABASE_URL` — Backend URL
 - `VITE_SUPABASE_PUBLISHABLE_KEY` — Public API key
 
-Edge function secrets (configured in Lovable Cloud):
+Edge function secrets (configured in Supabase):
 
-- `LOVABLE_API_KEY` — For AI insights
+- `AI_GATEWAY_API_KEY` — For AI insights
 - `SUPABASE_SERVICE_ROLE_KEY` — For server-side database operations
 
 ## Architecture
