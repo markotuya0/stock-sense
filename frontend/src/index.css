@@ -1,6 +1,22 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-background: #020617;
+  --color-foreground: #f8fafc;
+  --color-muted: #a1a1aa;
+  --color-accent: #10b981;
+  --color-accent-glow: rgba(16, 185, 129, 0.2);
+  --color-indigo-500: #6366f1;
+
+  --font-sans: "Inter", "Geist", "sans-serif";
+
+  --animate-glow-pulse: glow-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+
+  @keyframes glow-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.05); }
+  }
+}
 
 @layer base {
   body {
@@ -11,33 +27,35 @@
 
 @layer components {
   .glass-card {
-    @apply bg-white/5 border border-white/10 backdrop-blur-md rounded-2xl;
+    background-color: #020617;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
   }
   
   .glow-border {
     position: relative;
+    border-radius: 4px;
   }
   
   .glow-border::after {
     content: '';
     position: absolute;
     inset: -1px;
-    background: linear-gradient(45deg, transparent, theme('colors.accent.DEFAULT'), transparent);
+    background: linear-gradient(45deg, transparent, var(--color-accent), transparent);
     z-index: -1;
-    border-radius: inherit;
+    border-radius: 4px;
     opacity: 0;
     transition: opacity 0.3s ease;
   }
   
   .glow-border:hover::after {
-    opacity: 0.5;
+    opacity: 1;
   }
 
-  .mesh-gradient {
-    background-color: theme('colors.background');
-    background-image: 
-      radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0, transparent 50%), 
-      radial-gradient(at 50% 0%, rgba(16, 185, 129, 0.1) 0, transparent 50%),
-      radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.15) 0, transparent 50%);
+  .mesh-grain {
+    background-color: var(--color-background);
+    background-image: url("https://grainy-gradients.vercel.app/noise.svg");
+    opacity: 0.05;
+    pointer-events: none;
   }
 }

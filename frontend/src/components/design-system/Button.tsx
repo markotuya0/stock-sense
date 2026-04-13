@@ -14,18 +14,18 @@ export const Button: React.FC<ButtonProps> = ({
   className, 
   ...props 
 }) => {
-  const baseStyles = "relative inline-flex items-center justify-center rounded-lg font-medium transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 disabled:opacity-50 disabled:cursor-not-allowed";
+  const baseStyles = "relative inline-flex items-center justify-center rounded-[4px] font-medium tracking-wide transition-all focus:outline-none focus:ring-1 focus:ring-accent/50 disabled:opacity-50 disabled:cursor-not-allowed uppercase text-[10px] tracking-[0.2em]";
   
   const variants = {
-    primary: "bg-accent text-background hover:bg-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.2)]",
-    secondary: "bg-white/10 text-white hover:bg-white/20 border border-white/10",
-    ghost: "bg-transparent text-muted hover:text-white hover:bg-white/5",
+    primary: "bg-accent text-background hover:bg-emerald-400 border border-emerald-500",
+    secondary: "bg-transparent text-white hover:bg-white/5 border border-white/20",
+    ghost: "bg-transparent text-slate-400 hover:text-white",
   };
 
   const sizes = {
-    sm: "px-3 py-1.5 text-sm",
-    md: "px-5 py-2.5 text-base",
-    lg: "px-8 py-3.5 text-lg",
+    sm: "px-3 py-1.5",
+    md: "px-6 py-3",
+    lg: "px-10 py-4",
   };
 
   return (
