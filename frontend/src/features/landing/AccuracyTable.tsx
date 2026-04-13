@@ -35,7 +35,7 @@ export const AccuracyTable: React.FC = () => {
                   <td className="p-4 text-slate-500">{h.date}</td>
                   <td className="p-4 text-slate-500">{h.entry}</td>
                   <td className="p-4 text-slate-500">{h.current}</td>
-                  <td className={}>
+                  <td className={`p-4 text-right font-bold ${h.pnl.startsWith('+') ? 'text-emerald-500' : 'text-slate-500'}`}>
                     {h.pnl}
                   </td>
                 </tr>

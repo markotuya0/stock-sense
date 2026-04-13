@@ -3,9 +3,9 @@ import { Button } from '../../components/design-system/Button';
 import { Card } from '../../components/design-system/Card';
 import { Check } from 'lucide-react';
 
-export const PricingConversion: React.FC = () => {
+export const PricingConversion: React.FC<{id?: string}> = ({id}) => {
   return (
-    <section className="py-24 bg-[#050510]">
+    <section id={id} className="py-24 bg-[#050510]">
       <div className="max-w-6xl mx-auto px-6">
         <div className="flex flex-col md:flex-row gap-16 items-center">
           <div className="md:w-1/2">
