@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Terminal, Cpu, Search, Database, FileText, CheckCircle } from 'lucide-react';
+import { Terminal, Cpu, Search, Database, CheckCircle } from 'lucide-react';
 
 export const AnalysisTerminal: React.FC = () => {
   const [logs, setLogs] = useState<string[]>([]);

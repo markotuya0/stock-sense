@@ -1,5 +1,4 @@
 import React from 'react';
-import { Card } from '../../components/design-system/Card';
 import { Search, Brain, ShieldCheck, BarChart3, Fingerprint, Database, Zap } from 'lucide-react';
 
 const agents = [

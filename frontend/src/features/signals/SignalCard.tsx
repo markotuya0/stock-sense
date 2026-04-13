@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card } from '../../components/design-system/Card';
-import { TrendingUp, TrendingDown, Clock, ShieldAlert } from 'lucide-react';
+import { Clock, ShieldAlert } from 'lucide-react';
 
 export const SignalCard: React.FC<{ signal: any }> = ({ signal }) => {
   return (
