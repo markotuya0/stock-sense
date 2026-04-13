@@ -1,0 +1,67 @@
+name: Daily Market Scan
+
+on:
+  schedule:
+    # NGX Market Open (10:05 WAT = 09:05 UTC)
+    - cron: '05 09 * * 1-5'
+    # US Market Open (09:35 ET = 13:35 or 14:35 UTC)
+    - cron: '35 14 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      market:
+        description: 'Market to scan'
+        required: false
+        default: 'ALL'
+        type: choice
+        options:
+          - ALL
+          - US
+          - NGX
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Determine market
+        id: market
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "market=${{ github.event.inputs.market }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event.schedule }}" == "05 09 * * 1-5" ]; then
+            echo "market=NGX" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event.schedule }}" == "35 14 * * 1-5" ]; then
+            echo "market=US" >> $GITHUB_OUTPUT
+          else
+            echo "market=ALL" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run Scan
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+          UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_PERSONAL_CHAT_ID: ${{ secrets.TELEGRAM_PERSONAL_CHAT_ID }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          DRY_RUN: "False"
+        run: |
+          MARKET_FLAG=""
+          if [ "${{ steps.market.outputs.market }}" != "ALL" ]; then
+            MARKET_FLAG="--market ${{ steps.market.outputs.market }}"
+          fi
+          python scanner/main.py $MARKET_FLAG

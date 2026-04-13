@@ -1,0 +1,32 @@
+# Core Backend
+fastapi==0.115.0
+sqlalchemy==2.0.36
+pydantic==2.10.0
+pydantic-settings
+python-dotenv
+structlog
+uvicorn
+
+# Agents & AI
+langgraph==0.2.60
+langchain==0.3.0
+langchain-openai  # useful for some Groq/OpenAI compatible integrations
+groq==0.13.0
+google-generativeai
+
+# Data & Market
+yfinance
+beautifulsoup4
+requests
+pandas
+ta  # Technical analysis library for RSI, etc.
+
+# Database & Cache
+psycopg2-binary
+upstash-redis
+
+# Testing & Dev
+pytest
+pytest-asyncio
+black
+ruff
