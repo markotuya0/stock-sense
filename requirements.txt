@@ -6,6 +6,8 @@ pydantic-settings
 python-dotenv
 structlog
 uvicorn
+python-jose[cryptography]
+passlib[bcrypt]
 
 # Agents & AI
 langgraph==0.2.60
