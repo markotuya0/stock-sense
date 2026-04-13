@@ -3,8 +3,8 @@ from agents.graph import create_pipeline
 def run_test():
     app = create_pipeline()
     initial_state = {
-        "ticker": "ZENITHB",
-        "market": "NGX",
+        "ticker": "AAPL",
+        "market": "US",
         "steps_completed": [],
         "logs": []
     }

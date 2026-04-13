@@ -11,7 +11,15 @@ class AgentState(TypedDict):
     # Analysis Layers
     steps_completed: List[str]
     research_data: Optional[str]
+    news_sentiment: Optional[float]
+    
+    # Financial Indicators
     macro_score: Optional[float]
+    rsi: Optional[float]
+    macd: Optional[dict] # {"macd": float, "signal": float}
+    volatility: Optional[float]
+    
+    # Conviction
     technical_score: Optional[float]
     risk_score: Optional[float]
     alpha_conviction: Optional[float]
