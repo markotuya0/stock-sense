@@ -15,16 +15,30 @@ export const AnalysisTerminal: React.FC = () => {
   ];
 
   useEffect(() => {
-    let i = 0;
-    const interval = setInterval(() => {
-      if (i < steps.length) {
-        setLogs(prev => [...prev, steps[i]]);
-        i++;
-      } else {
-        clearInterval(interval);
+    // In a real scenario, the ticker would be passed as a prop from the search bar
+    const ticker = "ZENITHB"; 
+    const eventSource = new EventSource(`http://localhost:8000/api/v1/analysis/stream/${ticker}`);
+
+    eventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      setLogs(prev => [...prev, data.log]);
+      if (data.completed) {
+        eventSource.close();
       }
-    }, 1500);
-    return () => clearInterval(interval);
+    };
+
+    eventSource.addEventListener('done', (event: any) => {
+      const data = JSON.parse(event.data);
+      setLogs(prev => [...prev, `REPORT GENERATED: ${data.final_signal}`]);
+      eventSource.close();
+    });
+
+    eventSource.onerror = (err) => {
+      console.error("EventSource failed:", err);
+      eventSource.close();
+    };
+
+    return () => eventSource.close();
   }, []);
 
   return (

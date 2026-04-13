@@ -8,7 +8,7 @@ import structlog
 import time
 
 from config import settings
-from routers import auth, search, signals
+from routers import auth, search, signals, analysis
 from db.session import engine, Base
 
 # Setup logger
@@ -45,6 +45,7 @@ async def add_process_time_header(request: Request, call_next):
 app.include_router(auth.router)
 app.include_router(search.router)
 app.include_router(signals.router)
+app.include_router(analysis.router)
 
 @app.get("/")
 def root():

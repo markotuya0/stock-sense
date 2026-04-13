@@ -64,9 +64,9 @@ _None yet_
 
 ## PHASE 2 — Auth + Dashboard
 **Goal:** Multi-user, deployed, first real users can sign up
-**Status:** 🔴 Not Started
-**Started:** —
-**Completed:** —
+**Status:** 🟢 Completed
+**Started:** 2026-04-13
+**Completed:** 2026-04-13
 
 ### Files
 | File | Status | Notes |
@@ -110,15 +110,15 @@ _None yet_
 
 ## PHASE 3 — Multi-Agent Pipeline
 **Goal:** Working Layer 2 deep analysis with live streaming
-**Status:** 🔴 Not Started
-**Started:** —
+**Status:** 🟡 In Progress
+**Started:** 2026-04-13
 **Completed:** —
 
 ### Files
 | File | Status | Notes |
 |------|--------|-------|
-| `agents/state.py` | ⬜ Todo | |
-| `agents/graph.py` | ⬜ Todo | |
+| `agents/state.py` | ✅ Completed | AgentState Pydantic models |
+| `agents/graph.py` | ✅ Completed | 7-agent LangGraph orchestration |
 | `agents/orchestrator.py` | ⬜ Todo | |
 | `agents/cleaning/ngx_cleaner.py` | ⬜ Todo | NGX 5 checks |
 | `agents/cleaning/us_cleaner.py` | ⬜ Todo | |
