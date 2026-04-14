@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '../../components/design-system/Button';
 import { Card } from '../../components/design-system/Card';
 import { Check } from 'lucide-react';
@@ -36,7 +37,9 @@ export const PricingConversion: React.FC<{id?: string}> = ({id}) => {
               </div>
               <p className="text-[10px] text-slate-500 mb-10 uppercase tracking-widest font-mono">Billed monthly. Cancel anytime.</p>
               
-              <Button size="lg" className="w-full">Initialize Access</Button>
+              <Link to="/signup" className="w-full">
+                <Button size="lg" className="w-full">Initialize Access</Button>
+              </Link>
               
               <div className="mt-12 flex flex-col items-center opacity-40">
                  <span className="text-[9px] uppercase font-mono mb-4">Signal Stream Visual</span>

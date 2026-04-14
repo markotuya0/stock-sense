@@ -1,6 +1,9 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { LandingPage } from './pages/LandingPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { LoginPage } from './pages/auth/LoginPage';
+import { SignupPage } from './pages/auth/SignupPage';
+import { AuthGuard } from './components/guards/AuthGuard';
 
 function App() {
   return (
@@ -8,9 +11,9 @@ function App() {
       <div className="bg-background text-foreground selection:bg-accent/30 selection:text-accent">
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/login" element={<div className="h-screen flex items-center justify-center">Login coming soon</div>} />
-          <Route path="/signup" element={<div className="h-screen flex items-center justify-center">Signup coming soon</div>} />
+          <Route path="/dashboard" element={<AuthGuard><DashboardPage /></AuthGuard>} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
         </Routes>
       </div>
     </Router>
