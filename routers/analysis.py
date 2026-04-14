@@ -1,13 +1,19 @@
 import asyncio
 import json
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Depends
 from sse_starlette.sse import EventSourceResponse
 from agents.graph import create_pipeline
+from middleware.tier_guard import require_pro
+from db.models import User
 
 router = APIRouter(prefix="/api/v1/analysis", tags=["analysis"])
 
 @router.get("/stream/{ticker}")
-async def stream_analysis(ticker: str, request: Request):
+async def stream_analysis(
+    ticker: str, 
+    request: Request,
+    current_user: User = Depends(require_pro)
+):
     """
     Streams the 7-layer agent analysis in real-time using SSE.
     """

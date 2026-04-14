@@ -8,7 +8,7 @@ import structlog
 import time
 
 from config import settings
-from routers import auth, search, signals, analysis
+from routers import auth, search, signals, analysis, payment
 from db.session import engine, Base
 
 # Setup logger
@@ -46,6 +46,7 @@ app.include_router(auth.router)
 app.include_router(search.router)
 app.include_router(signals.router)
 app.include_router(analysis.router)
+app.include_router(payment.router)
 
 @app.get("/")
 def root():

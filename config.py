@@ -47,6 +47,11 @@ class Settings(BaseSettings):
     MIN_MOMENTUM_US: float = 1.5   # 1.5%
     MIN_MOMENTUM_NGX: float = 1.0  # 1.0%
 
+    # Payments (Paystack)
+    PAYSTACK_SECRET_KEY: str = Field("sk_test_mock", env="PAYSTACK_SECRET_KEY")
+    PAYSTACK_PUBLIC_KEY: str = Field("pk_test_mock", env="PAYSTACK_PUBLIC_KEY")
+    PAYSTACK_BASE_URL: str = "https://api.paystack.co"
+
     @property
     def is_production(self) -> bool:
         return self.ENVIRONMENT == "production"

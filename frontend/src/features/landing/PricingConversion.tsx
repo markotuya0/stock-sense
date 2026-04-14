@@ -1,11 +1,35 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../../components/design-system/Button';
 import { Card } from '../../components/design-system/Card';
-import { Check } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
+import { useAuthStore } from '../../store/auth/useAuthStore';
+import { paymentApi } from '../../api/payment';
 
 export const PricingConversion: React.FC<{id?: string}> = ({id}) => {
-  return (
+  const { isAuthenticated } = useAuthStore();
+  const navigate = useNavigate();
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleSubscribe = async () => {
+    if (!isAuthenticated) {
+      navigate('/signup');
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const data = await paymentApi.initialize();
+      if (data.authorization_url) {
+        window.location.href = data.authorization_url;
+      }
+    } catch (err) {
+      console.error("Payment initialization failed", err);
+      alert("Payment initialization failed. Please try again.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
     <section id={id} className="py-24 bg-[#050510]">
       <div className="max-w-6xl mx-auto px-6">
         <div className="flex flex-col md:flex-row gap-16 items-center">
@@ -37,9 +61,18 @@ export const PricingConversion: React.FC<{id?: string}> = ({id}) => {
               </div>
               <p className="text-[10px] text-slate-500 mb-10 uppercase tracking-widest font-mono">Billed monthly. Cancel anytime.</p>
               
-              <Link to="/signup" className="w-full">
-                <Button size="lg" className="w-full">Initialize Access</Button>
-              </Link>
+              <Button 
+                size="lg" 
+                className="w-full" 
+                onClick={handleSubscribe} 
+                disabled={isProcessing}
+              >
+                {isProcessing ? (
+                  <Loader2 className="animate-spin" size={18} />
+                ) : (
+                  "Initialize Access"
+                )}
+              </Button>
               
               <div className="mt-12 flex flex-col items-center opacity-40">
                  <span className="text-[9px] uppercase font-mono mb-4">Signal Stream Visual</span>
