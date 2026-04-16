@@ -9,23 +9,30 @@ import structlog
 log = structlog.get_logger()
 router = APIRouter(prefix="/search", tags=["search"])
 
+from db.models import User, SearchHistory, MarketTicker
+import yfinance as yf
+
 @router.get("/")
 def search_stock(
     q: str, 
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Universal stock search. Logs history and returns suggestions."""
+    """Universal stock search. Queries DB for known tickers and falls back to yfinance."""
     log.info("Stock search", query=q, user_id=current_user.id)
     
-    # Save to history
-    history = SearchHistory(user_id=current_user.id, query=q)
-    db.add(history)
-    db.commit()
+    # DB Search (Fast)
+    db_results = db.query(MarketTicker).filter(
+        (MarketTicker.symbol.ilike(f"%{q}%")) | (MarketTicker.name.ilike(f"%{q}%"))
+    ).limit(5).all()
     
-    # In production, this would hit a global ticker database or yfinance
-    # For now, return a mock suggestion
-    return [
-        {"symbol": "AAPL", "name": "Apple Inc.", "market": "US"},
-        {"symbol": "ZENITHB", "name": "Zenith Bank Plc", "market": "NGX"},
-    ]
+    if db_results:
+        return [{"symbol": r.symbol, "name": r.name, "market": r.market} for r in db_results]
+        
+    # Fallback: yfinance search (Global)
+    try:
+        yf_search = yf.Search(q, max_results=5).quotes
+        return [{"symbol": r["symbol"], "name": r.get("shortname", r["symbol"]), "market": "US"} for r in yf_search]
+    except Exception as e:
+        log.error("yfinance search failed", error=str(e))
+        return []

@@ -42,4 +42,15 @@ def get_signal_detail(
     signal = db.query(Signal).filter(Signal.id == signal_id).first()
     if not signal:
         raise HTTPException(status_code=404, detail="Signal not found")
+@router.get("/symbol/{symbol}")
+def get_signal_by_symbol(
+    symbol: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Fetch the latest signal and deep analysis for a specific ticker symbol."""
+    signal = db.query(Signal).filter(Signal.symbol == symbol.upper()).order_by(Signal.created_at.desc()).first()
+    if not signal:
+        # Fallback: if no signal exists in DB, we could trigger a researcher run here in production
+        raise HTTPException(status_code=404, detail=f"No analysis found for {symbol}")
     return signal

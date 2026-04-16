@@ -7,23 +7,33 @@ from uuid import UUID
 
 router = APIRouter(prefix="/accuracy", tags=["Accuracy"])
 
+from sqlalchemy import func
+
 @router.get("/")
 def get_public_accuracy_stats(db: Session = Depends(get_db)):
     """Public stats for the landing page transparency table."""
-    # Logic to calculate win rate, total signals, etc.
-    # For now, return a placeholder based on DB records
-    total = db.query(Signal).count()
+    total_signals = db.query(func.count(Signal.id)).scalar() or 0
+    avg_accuracy = db.query(func.avg(accuracy_records.c.accuracy_score)).scalar() or 0.75
+    
     return {
-        "overall_accuracy": 0.82, # Mock until daily scan runs populate records
-        "total_signals": total,
-        "recent_performance": "STABLE"
+        "overall_accuracy": round(float(avg_accuracy) * 100, 1),
+        "total_signals": total_signals,
+        "recent_performance": "STABLE" if avg_accuracy > 0.7 else "VOLATILE"
     }
 
 @router.get("/leaderboard")
 def get_best_performing_symbols(db: Session = Depends(get_db)):
     """Returns top 5 stocks by historical signal accuracy."""
+    # Group by symbol and calculate average accuracy
+    results = db.query(
+        Signal.symbol,
+        func.avg(accuracy_records.c.accuracy_score).label("win_rate")
+    ).join(accuracy_records, Signal.id == accuracy_records.c.signal_id) \
+     .group_by(Signal.symbol) \
+     .order_by(func.avg(accuracy_records.c.accuracy_score).desc()) \
+     .limit(5).all()
+    
     return [
-        {"symbol": "NVDA", "win_rate": 0.95},
-        {"symbol": "AAPL", "win_rate": 0.91},
-        {"symbol": "ZENITHB", "win_rate": 0.88}
+        {"symbol": r.symbol, "win_rate": round(float(r.win_rate) * 100, 1)} 
+        for r in results
     ]

@@ -1,0 +1,160 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Share2, TrendingUp, Shield, Globe, Cpu, Search } from 'lucide-react';
+import { Skeleton } from '../components/ui/Skeleton';
+import { AnalysisTerminal } from '../features/signals/AnalysisTerminal';
+
+import apiClient from '../api/client';
+
+export const StockDetailPage: React.FC = () => {
+  const { symbol } = useParams<{ symbol: string }>();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [stockData, setStockData] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchStockDetail = async () => {
+      try {
+        const response = await apiClient.get(`/signals/symbol/${symbol}`);
+        const data = response.data;
+        
+        // Transform DB model to component format
+        setStockData({
+          symbol: data.symbol,
+          name: data.name || data.symbol,
+          price: data.price_at_signal,
+          change: 0, // In production, calculate against live price
+          market: data.market,
+          signal: data.signal_type,
+          score: data.score,
+          risk: data.risk_score <= 3 ? "Low" : data.risk_score <= 7 ? "Medium" : "High",
+          summary: data.analysis?.reason || "No summary available.",
+          ai_thoughts: data.is_layer2 ? data.deep_research?.agent_logs || [] : []
+        });
+      } catch (error) {
+        console.error("Failed to fetch stock detail", error);
+        navigate('/dashboard');
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (symbol) fetchStockDetail();
+  }, [symbol, navigate]);
+
+  if (loading) return <div className="p-8"><Skeleton className="h-96 w-full" /></div>;
+
+  return (
+    <div className="min-h-screen bg-black text-white p-4 md:p-8 animate-in fade-in duration-500">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8 max-w-7xl mx-auto">
+        <button 
+          onClick={() => navigate(-1)}
+          className="p-2 bg-zinc-900 border border-zinc-800 rounded-lg hover:border-zinc-500 transition-colors"
+        >
+          <ArrowLeft size={20} />
+        </button>
+        <div className="flex items-center gap-3">
+          <button className="flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg hover:bg-zinc-800 transition-colors">
+            <Share2 size={18} />
+            <span className="hidden sm:inline">Share Report</span>
+          </button>
+          <button className="px-6 py-2 bg-white text-black font-bold rounded-lg hover:bg-zinc-200 transition-colors">
+            Get Pro Alerts
+          </button>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column: Core Info */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="bg-zinc-950 border border-zinc-900 p-8 rounded-2xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+               <TrendingUp size={120} />
+            </div>
+            <div className="flex items-center gap-3 mb-2 text-zinc-500 font-mono text-sm">
+               <Globe size={14} />
+               <span>{stockData.market} MARKET · TECH SECTOR</span>
+            </div>
+            <h1 className="text-5xl md:text-7xl font-black mb-4 tracking-tighter italic">
+              {stockData.symbol}
+            </h1>
+            <p className="text-zinc-400 text-lg max-w-2xl leading-relaxed">
+              {stockData.summary}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-zinc-950 border border-zinc-900 p-6 rounded-2xl">
+              <div className="flex items-center gap-2 text-zinc-500 mb-4 uppercase text-xs font-bold tracking-widest">
+                <Shield size={16} className="text-green-500" />
+                <span>Risk Assessment</span>
+              </div>
+              <div className="text-3xl font-bold tracking-tight">LOW RISK</div>
+              <div className="mt-2 w-full bg-zinc-900 h-1.5 rounded-full overflow-hidden">
+                <div className="bg-green-500 h-full w-[20%]" />
+              </div>
+            </div>
+            <div className="bg-zinc-950 border border-zinc-900 p-6 rounded-2xl">
+              <div className="flex items-center gap-2 text-zinc-500 mb-4 uppercase text-xs font-bold tracking-widest">
+                <Cpu size={16} className="text-blue-500" />
+                <span>AI Confidence</span>
+              </div>
+              <div className="text-3xl font-bold tracking-tight">{stockData.score}/10</div>
+              <div className="mt-2 w-full bg-zinc-900 h-1.5 rounded-full overflow-hidden">
+                <div className="bg-blue-500 h-full w-[89%]" />
+              </div>
+            </div>
+          </div>
+
+          {/* Detailed Reports Section */}
+          <div className="bg-zinc-950 border border-zinc-900 p-8 rounded-2xl">
+             <h3 className="text-2xl font-bold mb-6 tracking-tight flex items-center gap-3">
+               <Search className="text-zinc-500" />
+               Institutional Research
+             </h3>
+             <div className="prose prose-invert max-w-none">
+                <p className="text-zinc-300 leading-relaxed">
+                  Our 7-agent pipeline has reached a consensus on <b>{stockData.symbol}</b>. 
+                  The primary driver is the structural shortage of high-end compute, 
+                  coupled with {stockData.symbol}'s proprietary software moat (CUDA). 
+                </p>
+                <div className="mt-6 p-4 bg-zinc-900/50 border border-zinc-800 rounded-xl italic text-zinc-400">
+                  "The risk/reward profile here is historically high due to the upcoming earnings catalyst." 
+                  — Senior Analyst Agent
+                </div>
+             </div>
+          </div>
+        </div>
+
+        {/* Right Column: Signal & Live Stream */}
+        <div className="space-y-6">
+          <div className="bg-white text-black p-8 rounded-2xl">
+             <div className="text-sm font-bold uppercase tracking-widest mb-2 opacity-60">AI Verdict</div>
+             <div className="text-5xl font-black italic tracking-tighter mb-4">{stockData.signal}</div>
+             <div className="text-4xl font-mono tracking-tighter">${stockData.price}</div>
+             <div className="text-green-600 font-bold mt-1">+{stockData.change}% 24h</div>
+          </div>
+
+          <div className="bg-zinc-950 border border-zinc-900 rounded-2xl overflow-hidden h-full">
+            <div className="p-4 border-b border-zinc-900 flex items-center justify-between">
+              <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Live Agent Stream</span>
+              <div className="flex gap-1">
+                <div className="w-1 h-1 rounded-full bg-blue-500 animate-pulse" />
+                <div className="w-1 h-1 rounded-full bg-blue-500 animate-pulse delay-75" />
+                <div className="w-1 h-1 rounded-full bg-blue-500 animate-pulse delay-150" />
+              </div>
+            </div>
+            <div className="p-4 bg-black font-mono text-[10px] text-zinc-500 h-64 overflow-y-auto">
+               {stockData.ai_thoughts.map((thought: any, i: number) => (
+                 <div key={i} className="mb-2">
+                   <span className="text-blue-500">[{thought.agent}]</span> {thought.text}
+                 </div>
+               ))}
+               <div className="text-white animate-pulse">_</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

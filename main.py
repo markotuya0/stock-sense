@@ -7,7 +7,7 @@ import structlog
 import time
 
 from config import settings
-from routers import auth, search, signals, analysis, payment
+from routers import auth, search, signals, analysis, payment, accuracy, portfolio, users, webhooks
 from db.session import engine, Base
 from middleware.security_headers import SecurityHeadersMiddleware
 from middleware.rate_limit import limiter
@@ -50,6 +50,10 @@ app.include_router(search.router)
 app.include_router(signals.router)
 app.include_router(analysis.router)
 app.include_router(payment.router)
+app.include_router(accuracy.router, prefix="/api/v1")
+app.include_router(portfolio.router, prefix="/api/v1")
+app.include_router(users.router, prefix="/api/v1")
+app.include_router(webhooks.router, prefix="/api/v1")
 
 @app.get("/")
 def root():

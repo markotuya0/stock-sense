@@ -22,6 +22,8 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     is_admin = Column(Boolean, default=False)
     telegram_chat_id = Column(String, unique=True, nullable=True)
+    telegram_linking_code = Column(String, unique=True, nullable=True)
+    phone = Column(String, unique=True, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     settings = Column(JSON, default={})
 
@@ -104,4 +106,27 @@ class Payment(Base):
     amount = Column(Integer) # in kobo
     tier_selected = Column(String)
     status = Column(String, default="PENDING") # PENDING, SUCCESS, FAILED
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class PortfolioItem(Base):
+    __tablename__ = "portfolio_items"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    symbol = Column(String, index=True, nullable=False)
+    shares = Column(Float, default=0.0)
+    avg_price = Column(Float, default=0.0)
+    market = Column(String) # US, NGX
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    user = relationship("User", backref="portfolio_items")
+
+class MarketTicker(Base):
+    __tablename__ = "market_tickers"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    symbol = Column(String, unique=True, index=True, nullable=False)
+    name = Column(String, index=True)
+    market = Column(String, index=True) # US, NGX
+    is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
