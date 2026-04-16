@@ -3,6 +3,16 @@ import { Card } from '../../components/design-system/Card';
 import { Clock, ShieldAlert } from 'lucide-react';
 
 export const SignalCard: React.FC<{ signal: any }> = ({ signal }) => {
+  const verificationState = signal.verification_state || 'verified';
+  const stateClass =
+    verificationState === 'verified'
+      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+      : verificationState === 'stale'
+      ? 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+      : verificationState === 'fetching'
+      ? 'bg-blue-500/10 text-blue-300 border-blue-500/20'
+      : 'bg-zinc-600/10 text-zinc-300 border-zinc-500/20';
+
   return (
     <Card glow={signal.score > 8.5} className="group hover:-translate-y-1 transition-all">
       <div className="flex justify-between items-start mb-4">
@@ -40,7 +50,7 @@ export const SignalCard: React.FC<{ signal: any }> = ({ signal }) => {
       </div>
       
       <div className="mt-6 pt-6 border-t border-white/5 flex justify-between items-center text-[10px]">
-        <span className="text-muted">Last Updated: 2m ago</span>
+        <span className={`px-2 py-1 rounded border uppercase tracking-widest ${stateClass}`}>{verificationState}</span>
         <button className="text-accent hover:underline font-bold">Deep Research →</button>
       </div>
     </Card>

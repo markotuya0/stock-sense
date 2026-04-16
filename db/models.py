@@ -145,3 +145,54 @@ class BroadcastDelivery(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("User", backref="broadcast_deliveries")
+
+
+class MarketSnapshot(Base):
+    __tablename__ = "market_snapshots"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    symbol = Column(String, index=True, nullable=False)
+    market = Column(String, index=True, nullable=False)  # US, NGX
+    price = Column(Float, nullable=False)
+    previous_close = Column(Float, nullable=True)
+    move_pct = Column(Float, nullable=True)
+    volume = Column(Float, nullable=True)
+    as_of = Column(DateTime(timezone=True), index=True, nullable=False)
+    source = Column(String, nullable=False)  # NGX_OFFICIAL, AFRICAN_FINANCIALS
+    confidence = Column(String, nullable=False, default="MEDIUM")
+    raw_payload = Column(JSONB, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class NewsSentiment(Base):
+    __tablename__ = "news_sentiment"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    symbol = Column(String, index=True, nullable=False)
+    market = Column(String, index=True, nullable=False)
+    headline = Column(String, nullable=False)
+    url = Column(String, nullable=True)
+    source = Column(String, nullable=False)  # NAIRAMETRICS
+    published_at = Column(DateTime(timezone=True), index=True, nullable=True)
+    sentiment_score = Column(Float, nullable=True)
+    summary = Column(String, nullable=True)
+    model_meta = Column(JSONB, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class SignalJob(Base):
+    __tablename__ = "signal_jobs"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    symbol = Column(String, index=True, nullable=False)
+    market = Column(String, index=True, nullable=False)
+    job_type = Column(String, nullable=False, default="SIGNAL_VERIFY")
+    status = Column(String, nullable=False, default="QUEUED")  # QUEUED, RUNNING, VERIFIED, FAILED
+    progress = Column(Integer, nullable=False, default=0)
+    error_message = Column(String, nullable=True)
+    result_signal_id = Column(UUID(as_uuid=True), ForeignKey("signals.id"), nullable=True)
+    meta = Column(JSONB, nullable=True)
+    started_at = Column(DateTime(timezone=True), nullable=True)
+    finished_at = Column(DateTime(timezone=True), nullable=True)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_at = Column(DateTime(timezone=True), server_default=func.now())

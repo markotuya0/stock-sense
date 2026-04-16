@@ -102,8 +102,12 @@ export const AccuracyPage: React.FC = () => {
                       {(row.avg_return ?? 0) >= 0 ? '+' : ''}{row.avg_return ?? 0}%
                     </td>
                     <td className="px-8 py-6">
-                      <span className="px-3 py-1 bg-green-500/10 text-green-500 text-[10px] font-bold rounded-full uppercase tracking-tighter border border-green-500/20">
-                        {(row.win_rate ?? 0) >= 70 ? 'Outperforming' : 'Watchlist'}
+                      <span className={`px-3 py-1 text-[10px] font-bold rounded-full uppercase tracking-tighter border ${
+                        (row.verification_state || 'verified') === 'verified'
+                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                          : 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+                      }`}>
+                        {row.verification_state || 'verified'}
                       </span>
                     </td>
                   </tr>

@@ -57,6 +57,7 @@ def get_best_performing_symbols(db: Session = Depends(get_db)):
             "market": r.market,
             "win_rate": round(float(r.win_rate) * 100, 1),
             "avg_return": round(float(r.avg_return or 0.0), 2),
+            "verification_state": "verified",
         }
         for r in results
     ]

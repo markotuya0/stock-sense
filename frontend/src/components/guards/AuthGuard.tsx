@@ -1,3 +1,5 @@
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/auth/useAuthStore';
 
 interface AuthGuardProps {
@@ -14,5 +16,6 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
     }
   }, [isAuthenticated, navigate]);
 
+  if (!isAuthenticated) return null;
   return <>{children}</>;
 };

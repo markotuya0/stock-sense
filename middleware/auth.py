@@ -1,5 +1,4 @@
 from fastapi import Request, HTTPException, Depends
-from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from jose import jwt, JWTError
 from db.session import get_db
@@ -7,20 +6,34 @@ from db.models import User
 from services.auth_service import ALGORITHM, decode_token
 from config import settings
 import structlog
+from typing import Optional
 
 log = structlog.get_logger()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+
+def _extract_access_token(request: Request) -> Optional[str]:
+    # Typical HTTP auth path
+    auth_header = request.headers.get("Authorization") or request.headers.get("authorization")
+    if auth_header and auth_header.lower().startswith("bearer "):
+        return auth_header.split(" ", 1)[1]
+
+    # SSE-friendly path (EventSource cannot set Authorization headers)
+    return request.query_params.get("token") or request.query_params.get("access_token")
+
 
 async def get_current_user(
-    token: str = Depends(oauth2_scheme), 
-    db: Session = Depends(get_db)
+    request: Request,
+    db: Session = Depends(get_db),
 ) -> User:
     credentials_exception = HTTPException(
         status_code=401,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    
+
+    token = _extract_access_token(request)
+    if not token:
+        raise credentials_exception
+
     payload = decode_token(token)
     email: str = payload.get("sub")
     token_type: str = payload.get("type")

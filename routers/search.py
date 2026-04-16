@@ -9,7 +9,7 @@ import structlog
 log = structlog.get_logger()
 router = APIRouter(prefix="/search", tags=["search"])
 
-from db.models import User, SearchHistory, MarketTicker
+from db.models import User, SearchHistory, MarketTicker, MarketSnapshot
 import yfinance as yf
 
 @router.get("/")
@@ -34,7 +34,24 @@ def search_stock(
     ).limit(5).all()
     
     if db_results:
-        return [{"symbol": r.symbol, "name": r.name, "market": r.market} for r in db_results]
+        payload = []
+        for result in db_results:
+            latest_snapshot = (
+                db.query(MarketSnapshot)
+                .filter(MarketSnapshot.symbol == result.symbol)
+                .order_by(MarketSnapshot.as_of.desc())
+                .first()
+            )
+            payload.append(
+                {
+                    "symbol": result.symbol,
+                    "name": result.name,
+                    "market": result.market,
+                    "verification_state": "verified" if latest_snapshot else "stale",
+                    "data_source": latest_snapshot.source if latest_snapshot else "MARKET_TICKERS_DB",
+                }
+            )
+        return payload
         
     # Fallback: yfinance search (Global)
     try:
@@ -51,6 +68,8 @@ def search_stock(
                     "symbol": symbol.upper(),
                     "name": result.get("shortname", symbol.upper()),
                     "market": market,
+                    "verification_state": "fetching",
+                    "data_source": "YFINANCE_SEARCH",
                 }
             )
         return payload

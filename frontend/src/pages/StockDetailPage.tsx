@@ -27,7 +27,10 @@ export const StockDetailPage: React.FC = () => {
         risk: data.risk_score <= 3 ? "Low" : data.risk_score <= 7 ? "Medium" : "High",
         summary: data.analysis?.reason || "No summary available.",
         sector: data.sector || "N/A",
-        ai_thoughts: data.is_layer2 ? data.deep_research?.agent_logs || [] : []
+        ai_thoughts: data.is_layer2 ? data.deep_research?.agent_logs || [] : [],
+        verification_state: data.verification_state || 'verified',
+        verified_at: data.verified_at,
+        data_source: data.data_source || 'SIGNALS_DB',
       });
     };
 
@@ -121,6 +124,9 @@ export const StockDetailPage: React.FC = () => {
             <div className="flex items-center gap-3 mb-2 text-zinc-500 font-mono text-sm">
                <Globe size={14} />
                <span>{stockData.market} MARKET · {stockData.sector}</span>
+               <span className="px-2 py-1 rounded border border-emerald-500/20 bg-emerald-500/10 text-emerald-300 text-[10px] uppercase tracking-widest">
+                 {stockData.verification_state}
+               </span>
             </div>
             <h1 className="text-5xl md:text-7xl font-black mb-4 tracking-tighter italic">
               {stockData.symbol}
@@ -165,6 +171,9 @@ export const StockDetailPage: React.FC = () => {
                 </p>
                 <div className="mt-6 p-4 bg-zinc-900/50 border border-zinc-800 rounded-xl italic text-zinc-400">
                   "{stockData.signal} generated from the latest available stored analysis report."
+                </div>
+                <div className="mt-3 text-xs text-zinc-500">
+                  Source: {stockData.data_source} {stockData.verified_at ? `· Verified at ${new Date(stockData.verified_at).toLocaleString()}` : ''}
                 </div>
              </div>
           </div>

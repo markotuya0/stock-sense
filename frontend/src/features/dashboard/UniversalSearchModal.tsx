@@ -8,6 +8,12 @@ export const UniversalSearchModal: React.FC<{ isOpen: boolean; onClose: () => vo
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const badgeClass = (state?: string) => {
+    if (state === 'verified') return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+    if (state === 'stale') return 'bg-amber-500/10 text-amber-300 border-amber-500/20';
+    if (state === 'fetching') return 'bg-blue-500/10 text-blue-300 border-blue-500/20';
+    return 'bg-zinc-600/10 text-zinc-300 border-zinc-500/20';
+  };
 
   useEffect(() => {
     const normalized = query.trim();
@@ -79,6 +85,9 @@ export const UniversalSearchModal: React.FC<{ isOpen: boolean; onClose: () => vo
                   <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">
                     <Globe size={12} />
                     <span>{res.market}</span>
+                    <span className={`px-2 py-1 rounded border text-[9px] ${badgeClass(res.verification_state)}`}>
+                      {res.verification_state || 'verified'}
+                    </span>
                   </div>
                 </div>
               ))}

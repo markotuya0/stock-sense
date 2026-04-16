@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/design-system/Button';
 import { Card } from '../../components/design-system/Card';
 import { Check, Loader2 } from 'lucide-react';
@@ -30,6 +30,8 @@ export const PricingConversion: React.FC<{id?: string}> = ({id}) => {
       setIsProcessing(false);
     }
   };
+
+  return (
     <section id={id} className="py-24 bg-[#050510]">
       <div className="max-w-6xl mx-auto px-6">
         <div className="flex flex-col md:flex-row gap-16 items-center">

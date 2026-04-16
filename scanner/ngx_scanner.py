@@ -1,7 +1,7 @@
-import requests
 import structlog
 from typing import List, Dict, Any, Tuple
 from config import settings
+from scanner.ingestion_service import NGXIngestionService
 
 log = structlog.get_logger()
 
@@ -89,29 +89,13 @@ class NGXScanner:
         self.min_price = settings.NGX_PRICE_MIN
         self.min_momentum = settings.MIN_MOMENTUM_NGX
         self.min_volume_ratio = settings.MIN_VOLUME_RATIO
+        self.ingestion_service = NGXIngestionService()
 
     def fetch_ngx_data(self) -> List[Dict[str, Any]]:
         """
-        Fetch NGX data from a configured API endpoint.
+        Fetch reconciled NGX data from hybrid ingestion service.
         """
-        endpoint = getattr(settings, "NGX_DATA_API_URL", None)
-        if not endpoint:
-            log.error("NGX_DATA_API_URL is not configured; cannot fetch live NGX data")
-            return []
-
-        try:
-            response = requests.get(endpoint, timeout=15)
-            response.raise_for_status()
-            payload = response.json()
-            if isinstance(payload, dict):
-                payload = payload.get("data", [])
-            if not isinstance(payload, list):
-                log.error("Invalid NGX payload shape", payload_type=type(payload).__name__)
-                return []
-            return payload
-        except Exception as exc:
-            log.error("Failed to fetch NGX live data", error=str(exc))
-            return []
+        return self.ingestion_service.ingest()
 
     def scan(self) -> List[Dict[str, Any]]:
         raw_data = self.fetch_ngx_data()

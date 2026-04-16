@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Terminal, Cpu, Search, Database, CheckCircle } from 'lucide-react';
+import { useAuthStore } from '../../store/auth/useAuthStore';
 
 export const AnalysisTerminal: React.FC<{ ticker: string }> = ({ ticker }) => {
   const [logs, setLogs] = useState<string[]>([]);
+  const tier = useAuthStore((s) => s.user?.tier);
   const steps = [
     "Initializing Researcher agent...",
     "Querying SEC EDGAR filings for AAPL...",
@@ -16,8 +18,15 @@ export const AnalysisTerminal: React.FC<{ ticker: string }> = ({ ticker }) => {
 
   useEffect(() => {
     if (!ticker) return;
+    const tierLevel = tier === 'ENTERPRISE' ? 2 : tier === 'PRO' ? 1 : 0;
+    if (tierLevel < 1) {
+      setLogs(["Upgrade to Pro to view live Layer 2 analysis."]);
+      return;
+    }
     const base = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-    const eventSource = new EventSource(`${base}/api/v1/analysis/stream/${ticker}`);
+    const token = localStorage.getItem('access_token');
+    const url = `${base}/api/v1/analysis/stream/${ticker}?token=${encodeURIComponent(token || '')}`;
+    const eventSource = new EventSource(url);
 
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data);
@@ -35,6 +44,7 @@ export const AnalysisTerminal: React.FC<{ ticker: string }> = ({ ticker }) => {
 
     eventSource.onerror = (err) => {
       console.error("EventSource failed:", err);
+      setLogs((prev) => (prev.length ? prev : ["Live analysis unavailable right now."]));
       eventSource.close();
     };
 

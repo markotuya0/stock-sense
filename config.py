@@ -47,6 +47,13 @@ class Settings(BaseSettings):
     MIN_MOMENTUM_US: float = 1.5   # 1.5%
     MIN_MOMENTUM_NGX: float = 1.0  # 1.0%
 
+    # NGX Data Ingestion
+    NGX_DATA_API_URL: Optional[str] = Field(default=None, env="NGX_DATA_API_URL")
+    NGX_PRIMARY_SOURCE: str = Field(default="ngx_official", env="NGX_PRIMARY_SOURCE")
+    NGX_FALLBACK_SOURCE: str = Field(default="africanfinancials", env="NGX_FALLBACK_SOURCE")
+    NGX_SOURCE_TIMEOUT_SECONDS: int = Field(default=15, env="NGX_SOURCE_TIMEOUT_SECONDS")
+    NGX_SOURCE_RETRY_COUNT: int = Field(default=2, env="NGX_SOURCE_RETRY_COUNT")
+
     # Payments (Paystack)
     PAYSTACK_SECRET_KEY: str = Field("sk_test_mock", env="PAYSTACK_SECRET_KEY")
     PAYSTACK_PUBLIC_KEY: str = Field("pk_test_mock", env="PAYSTACK_PUBLIC_KEY")
