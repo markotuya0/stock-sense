@@ -1,9 +1,6 @@
 import requests
-from bs4 import BeautifulSoup
 import structlog
 from typing import List, Dict, Any, Tuple
-import pandas as pd
-from datetime import datetime
 from config import settings
 
 log = structlog.get_logger()
@@ -95,40 +92,26 @@ class NGXScanner:
 
     def fetch_ngx_data(self) -> List[Dict[str, Any]]:
         """
-        Scrape NGX data. 
-        In production, this would hit a target URL or API.
-        For now, we implement the structure.
+        Fetch NGX data from a configured API endpoint.
         """
-        # Example URL: https://ngxgroup.com/exchange/data/equities-price-list/
-        log.info("Fetching NGX market data via scraper")
-        
-        # This is where the scraping logic would go.
-        # Since we can't hit live sites reliably in this environment, 
-        # we'll return a sample list that demonstrates the cleaning logic.
-        
-        sample_data = [
-            {
-                "symbol": "DANGCEM",
-                "name": "Dangote Cement Plc",
-                "price": 68000.0,  # Kobo/Naira confusion case
-                "prev_price": 670.0,
-                "volume": 2500000,
-                "avg_volume_30d": 1800000,
-                "prices": [670.0, 670.0, 670.0, 670.0], # Stale price case
-                "last_trade_days_ago": 0
-            },
-            {
-                "symbol": "ZENITHB",
-                "name": "Zenith Bank Plc",
-                "price": 38.50,
-                "prev_price": 37.80,
-                "volume": 15000000,
-                "avg_volume_30d": 12000000,
-                "prices": [36.0, 37.0, 37.5, 37.8, 38.5],
-                "last_trade_days_ago": 0
-            }
-        ]
-        return sample_data
+        endpoint = getattr(settings, "NGX_DATA_API_URL", None)
+        if not endpoint:
+            log.error("NGX_DATA_API_URL is not configured; cannot fetch live NGX data")
+            return []
+
+        try:
+            response = requests.get(endpoint, timeout=15)
+            response.raise_for_status()
+            payload = response.json()
+            if isinstance(payload, dict):
+                payload = payload.get("data", [])
+            if not isinstance(payload, list):
+                log.error("Invalid NGX payload shape", payload_type=type(payload).__name__)
+                return []
+            return payload
+        except Exception as exc:
+            log.error("Failed to fetch NGX live data", error=str(exc))
+            return []
 
     def scan(self) -> List[Dict[str, Any]]:
         raw_data = self.fetch_ngx_data()

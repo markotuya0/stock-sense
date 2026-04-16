@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Terminal, Cpu, Search, Database, CheckCircle } from 'lucide-react';
 
-export const AnalysisTerminal: React.FC = () => {
+export const AnalysisTerminal: React.FC<{ ticker: string }> = ({ ticker }) => {
   const [logs, setLogs] = useState<string[]>([]);
   const steps = [
     "Initializing Researcher agent...",
@@ -15,9 +15,9 @@ export const AnalysisTerminal: React.FC = () => {
   ];
 
   useEffect(() => {
-    // In a real scenario, the ticker would be passed as a prop from the search bar
-    const ticker = "ZENITHB"; 
-    const eventSource = new EventSource(`http://localhost:8000/api/v1/analysis/stream/${ticker}`);
+    if (!ticker) return;
+    const base = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    const eventSource = new EventSource(`${base}/api/v1/analysis/stream/${ticker}`);
 
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data);
@@ -39,7 +39,7 @@ export const AnalysisTerminal: React.FC = () => {
     };
 
     return () => eventSource.close();
-  }, []);
+  }, [ticker]);
 
   return (
     <div className="bg-[#050510] border border-white/10 rounded-xl overflow-hidden shadow-2xl">

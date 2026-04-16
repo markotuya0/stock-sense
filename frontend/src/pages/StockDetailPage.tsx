@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Share2, TrendingUp, Shield, Globe, Cpu, Search } from 'lucide-react';
 import { Skeleton } from '../components/ui/Skeleton';
-import { AnalysisTerminal } from '../features/signals/AnalysisTerminal';
 
 import apiClient from '../api/client';
 
@@ -10,27 +9,56 @@ export const StockDetailPage: React.FC = () => {
   const { symbol } = useParams<{ symbol: string }>();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [fetchingRealtime, setFetchingRealtime] = useState(false);
   const [stockData, setStockData] = useState<any>(null);
 
   useEffect(() => {
+    let pollTimer: number | undefined;
+
+    const hydrateStock = (data: any) => {
+      setStockData({
+        symbol: data.symbol,
+        name: data.name || data.symbol,
+        price: data.price_at_signal,
+        change: data.change_pct ?? 0,
+        market: data.market,
+        signal: data.signal_type,
+        score: data.score,
+        risk: data.risk_score <= 3 ? "Low" : data.risk_score <= 7 ? "Medium" : "High",
+        summary: data.analysis?.reason || "No summary available.",
+        sector: data.sector || "N/A",
+        ai_thoughts: data.is_layer2 ? data.deep_research?.agent_logs || [] : []
+      });
+    };
+
+    const pollUntilVerified = async () => {
+      const statusRes = await apiClient.get(`/signals/symbol/${symbol}/status`);
+      if (statusRes.data?.status === 'verified') {
+        const finalRes = await apiClient.get(`/signals/symbol/${symbol}`);
+        hydrateStock(finalRes.data);
+        setFetchingRealtime(false);
+        setLoading(false);
+        return;
+      }
+      if (statusRes.data?.status === 'failed') {
+        setFetchingRealtime(false);
+        setLoading(false);
+        return;
+      }
+      pollTimer = window.setTimeout(pollUntilVerified, 2500);
+    };
+
     const fetchStockDetail = async () => {
       try {
         const response = await apiClient.get(`/signals/symbol/${symbol}`);
         const data = response.data;
-        
-        // Transform DB model to component format
-        setStockData({
-          symbol: data.symbol,
-          name: data.name || data.symbol,
-          price: data.price_at_signal,
-          change: 0, // In production, calculate against live price
-          market: data.market,
-          signal: data.signal_type,
-          score: data.score,
-          risk: data.risk_score <= 3 ? "Low" : data.risk_score <= 7 ? "Medium" : "High",
-          summary: data.analysis?.reason || "No summary available.",
-          ai_thoughts: data.is_layer2 ? data.deep_research?.agent_logs || [] : []
-        });
+        if (data?.status === 'fetching') {
+          setFetchingRealtime(true);
+          setLoading(false);
+          pollTimer = window.setTimeout(pollUntilVerified, 2000);
+          return;
+        }
+        hydrateStock(data);
       } catch (error) {
         console.error("Failed to fetch stock detail", error);
         navigate('/dashboard');
@@ -39,9 +67,28 @@ export const StockDetailPage: React.FC = () => {
       }
     };
     if (symbol) fetchStockDetail();
+
+    return () => {
+      if (pollTimer) {
+        window.clearTimeout(pollTimer);
+      }
+    };
   }, [symbol, navigate]);
 
   if (loading) return <div className="p-8"><Skeleton className="h-96 w-full" /></div>;
+  if (fetchingRealtime) {
+    return (
+      <div className="min-h-screen bg-black text-white p-8 flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <div className="text-xl font-bold">Fetching verified real-time analysis...</div>
+          <div className="text-zinc-500 text-sm">We are validating live market data for {symbol}.</div>
+        </div>
+      </div>
+    );
+  }
+  if (!stockData) {
+    return <div className="p-8 text-zinc-400">Signal unavailable right now. Please retry shortly.</div>;
+  }
 
   return (
     <div className="min-h-screen bg-black text-white p-4 md:p-8 animate-in fade-in duration-500">
@@ -73,7 +120,7 @@ export const StockDetailPage: React.FC = () => {
             </div>
             <div className="flex items-center gap-3 mb-2 text-zinc-500 font-mono text-sm">
                <Globe size={14} />
-               <span>{stockData.market} MARKET · TECH SECTOR</span>
+               <span>{stockData.market} MARKET · {stockData.sector}</span>
             </div>
             <h1 className="text-5xl md:text-7xl font-black mb-4 tracking-tighter italic">
               {stockData.symbol}
@@ -89,9 +136,9 @@ export const StockDetailPage: React.FC = () => {
                 <Shield size={16} className="text-green-500" />
                 <span>Risk Assessment</span>
               </div>
-              <div className="text-3xl font-bold tracking-tight">LOW RISK</div>
+              <div className="text-3xl font-bold tracking-tight">{stockData.risk.toUpperCase()} RISK</div>
               <div className="mt-2 w-full bg-zinc-900 h-1.5 rounded-full overflow-hidden">
-                <div className="bg-green-500 h-full w-[20%]" />
+                <div className="bg-green-500 h-full" style={{ width: `${Math.max(10, 100 - ((stockData.score || 0) * 10))}%` }} />
               </div>
             </div>
             <div className="bg-zinc-950 border border-zinc-900 p-6 rounded-2xl">
@@ -101,7 +148,7 @@ export const StockDetailPage: React.FC = () => {
               </div>
               <div className="text-3xl font-bold tracking-tight">{stockData.score}/10</div>
               <div className="mt-2 w-full bg-zinc-900 h-1.5 rounded-full overflow-hidden">
-                <div className="bg-blue-500 h-full w-[89%]" />
+                <div className="bg-blue-500 h-full" style={{ width: `${Math.max(5, (stockData.score || 0) * 10)}%` }} />
               </div>
             </div>
           </div>
@@ -114,13 +161,10 @@ export const StockDetailPage: React.FC = () => {
              </h3>
              <div className="prose prose-invert max-w-none">
                 <p className="text-zinc-300 leading-relaxed">
-                  Our 7-agent pipeline has reached a consensus on <b>{stockData.symbol}</b>. 
-                  The primary driver is the structural shortage of high-end compute, 
-                  coupled with {stockData.symbol}'s proprietary software moat (CUDA). 
+                  {stockData.summary}
                 </p>
                 <div className="mt-6 p-4 bg-zinc-900/50 border border-zinc-800 rounded-xl italic text-zinc-400">
-                  "The risk/reward profile here is historically high due to the upcoming earnings catalyst." 
-                  — Senior Analyst Agent
+                  "{stockData.signal} generated from the latest available stored analysis report."
                 </div>
              </div>
           </div>
@@ -132,7 +176,9 @@ export const StockDetailPage: React.FC = () => {
              <div className="text-sm font-bold uppercase tracking-widest mb-2 opacity-60">AI Verdict</div>
              <div className="text-5xl font-black italic tracking-tighter mb-4">{stockData.signal}</div>
              <div className="text-4xl font-mono tracking-tighter">${stockData.price}</div>
-             <div className="text-green-600 font-bold mt-1">+{stockData.change}% 24h</div>
+             <div className={`${stockData.change >= 0 ? 'text-green-600' : 'text-red-500'} font-bold mt-1`}>
+               {stockData.change >= 0 ? '+' : ''}{stockData.change}% 24h
+             </div>
           </div>
 
           <div className="bg-zinc-950 border border-zinc-900 rounded-2xl overflow-hidden h-full">

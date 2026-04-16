@@ -3,9 +3,7 @@ import { DashboardLayout } from '../features/dashboard/DashboardLayout';
 import { SignalCard } from '../features/signals/SignalCard';
 import { AnalysisTerminal } from '../features/signals/AnalysisTerminal';
 import { SignalSkeleton } from '../components/ui/Skeleton';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+import apiClient from '../api/client';
 
 export const DashboardPage: React.FC = () => {
   const [signals, setSignals] = useState<any[]>([]);
@@ -14,10 +12,7 @@ export const DashboardPage: React.FC = () => {
   useEffect(() => {
     const fetchSignals = async () => {
       try {
-        const token = JSON.parse(localStorage.getItem('auth-storage') || '{}')?.state?.token;
-        const response = await axios.get(`${API_URL}/signals`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await apiClient.get('/signals');
         setSignals(response.data);
       } catch (err) {
         console.error("Failed to fetch signals", err);
@@ -63,7 +58,7 @@ export const DashboardPage: React.FC = () => {
                     <div className="w-1.5 h-1.5 rounded-full bg-accent" /> LIVE ANALYSIS
                  </span>
               </div>
-              <AnalysisTerminal />
+              <AnalysisTerminal ticker={signals[0]?.symbol || 'NVDA'} />
               
               <div className="mt-8 glass-card p-6 border-indigo-500/20">
                  <h3 className="text-lg font-bold mb-4 flex items-center gap-2 italic">

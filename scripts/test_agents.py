@@ -2,6 +2,8 @@ import asyncio
 import os
 from dotenv import load_dotenv
 from agents.graph import pipeline
+from db.session import SessionLocal
+from db.models import Signal
 
 # Load local env
 load_dotenv()
@@ -32,6 +34,23 @@ async def test_deep_analysis(ticker: str, market: str):
         if final_state.get("report_data"):
             print("\n--- REPORT DATA (ARBITER) ---")
             print(f"PRO REPORT: {final_state['report_data'].get('professional_report')[:100]}...")
+
+        db = SessionLocal()
+        try:
+            latest_signal = db.query(Signal).filter(Signal.symbol == ticker).order_by(Signal.created_at.desc()).first()
+            if latest_signal:
+                latest_signal.is_layer2 = True
+                latest_signal.deep_research = {
+                    "agent_logs": final_state.get("logs", []),
+                    "report_data": final_state.get("report_data", {}),
+                    "steps_completed": final_state.get("steps_completed", []),
+                }
+                db.commit()
+                print("✅ Persisted deep_research payload to latest signal record")
+            else:
+                print("⚠️ No matching signal record found to attach deep_research payload")
+        finally:
+            db.close()
             
     except Exception as e:
         print(f"❌ Analysis failed: {str(e)}")

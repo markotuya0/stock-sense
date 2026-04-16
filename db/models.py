@@ -130,3 +130,18 @@ class MarketTicker(Base):
     market = Column(String, index=True) # US, NGX
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class BroadcastDelivery(Base):
+    __tablename__ = "broadcast_deliveries"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), index=True, nullable=False)
+    symbol = Column(String, index=True, nullable=False)
+    channel = Column(String, nullable=False)  # TELEGRAM, WHATSAPP
+    status = Column(String, nullable=False, default="PENDING")  # PENDING, SENT, FAILED
+    provider_message_id = Column(String, nullable=True)
+    error_message = Column(String, nullable=True)
+    sent_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", backref="broadcast_deliveries")

@@ -1,8 +1,6 @@
-import json
 import structlog
 from typing import Any, Optional
-from datetime import timedelta
-from config import settings
+import time
 
 log = structlog.get_logger()
 
@@ -15,6 +13,8 @@ CACHE_CONFIG = {
 }
 
 class CacheService:
+    _memory_store: dict[str, tuple[Any, float]] = {}
+
     @staticmethod
     def get_key(template_name: str, **kwargs) -> str:
         template = CACHE_CONFIG.get(template_name, {}).get("key", "default:{symbol}")
@@ -24,14 +24,18 @@ class CacheService:
     def get_ttl(template_name: str) -> int:
         return CACHE_CONFIG.get(template_name, {}).get("ttl", 3600)
 
-    # Note: Real implementation would use redis-py
-    # For now, we provide the architectural hook
     @staticmethod
     async def get(key: str) -> Optional[Any]:
-        log.debug("Cache check", key=key)
-        return None
+        item = CacheService._memory_store.get(key)
+        if not item:
+            return None
+        value, expires_at = item
+        if expires_at < time.time():
+            CacheService._memory_store.pop(key, None)
+            return None
+        return value
 
     @staticmethod
     async def set(key: str, value: Any, ttl: int):
-        log.debug("Cache store", key=key, ttl=ttl)
-        pass
+        CacheService._memory_store[key] = (value, time.time() + ttl)
+        log.debug("Cache stored", key=key, ttl=ttl)

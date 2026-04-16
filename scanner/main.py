@@ -55,7 +55,7 @@ async def run_daily_scan(market: Optional[str] = None, dry_run: bool = False):
     # 3. AI Analysis
     log.info("Step 2: Running AI analysis")
     if dry_run:
-        log.info("Dry run: Skipping AI analysis")
+        log.info("Dry run enabled: generating non-persistent test signals only")
         signals = [
             Layer1Signal(
                 symbol=c["symbol"],
@@ -63,8 +63,8 @@ async def run_daily_scan(market: Optional[str] = None, dry_run: bool = False):
                 score=7.0,
                 price_target=c["price"] * 1.1,
                 risk_score=5,
-                reason="Mock analysis for dry run.",
-                beginner_note="This is a test notification.",
+                reason="Dry-run analysis output (not persisted).",
+                beginner_note="Dry-run output only.",
                 learn_term="Dry Run",
                 learn_explanation="A test run where no real actions are taken."
             ) for c in all_candidates[:3]
@@ -74,40 +74,41 @@ async def run_daily_scan(market: Optional[str] = None, dry_run: bool = False):
     
     log.info("Analysis complete", signals_generated=len(signals))
 
-    # 4. Save to Database
-    log.info("Step 3: Persisting signals to database")
-    from db.session import SessionLocal
-    from db.models import Signal
-    
-    db = SessionLocal()
-    try:
-        for s in signals:
-            # Check if signal for this symbol and today already exists to avoid duplicates
-            # (Simplistic check for now)
-            new_db_signal = Signal(
-                symbol=s.symbol,
-                name=next((c["name"] for c in all_candidates if c["symbol"] == s.symbol), s.symbol),
-                market="US" if any(c["symbol"] == s.symbol and c["market"] == "US" for c in all_candidates) else "NGX",
-                signal_type=s.signal,
-                score=s.score,
-                price_at_signal=s.price_target / 1.1, # Approx current price logic if not explicitly passed
-                price_target=s.price_target,
-                risk_score=s.risk_score,
-                analysis={
-                    "reason": s.reason,
-                    "beginner_note": s.beginner_note,
-                    "learn_term": s.learn_term,
-                    "learn_explanation": s.learn_explanation
-                }
-            )
-            db.add(new_db_signal)
-        db.commit()
-        log.info("Database persistence complete", signals_saved=len(signals))
-    except Exception as e:
-        log.error("Database persistence failed", error=str(e))
-        db.rollback()
-    finally:
-        db.close()
+    if not dry_run:
+        # 4. Save to Database
+        log.info("Step 3: Persisting signals to database")
+        from db.session import SessionLocal
+        from db.models import Signal
+
+        db = SessionLocal()
+        try:
+            for s in signals:
+                new_db_signal = Signal(
+                    symbol=s.symbol,
+                    name=next((c["name"] for c in all_candidates if c["symbol"] == s.symbol), s.symbol),
+                    market="US" if any(c["symbol"] == s.symbol and c["market"] == "US" for c in all_candidates) else "NGX",
+                    signal_type=s.signal,
+                    score=s.score,
+                    price_at_signal=s.price_target / 1.1,
+                    price_target=s.price_target,
+                    risk_score=s.risk_score,
+                    analysis={
+                        "reason": s.reason,
+                        "beginner_note": s.beginner_note,
+                        "learn_term": s.learn_term,
+                        "learn_explanation": s.learn_explanation
+                    }
+                )
+                db.add(new_db_signal)
+            db.commit()
+            log.info("Database persistence complete", signals_saved=len(signals))
+        except Exception as e:
+            log.error("Database persistence failed", error=str(e))
+            db.rollback()
+        finally:
+            db.close()
+    else:
+        log.info("Dry run: skipping database persistence")
 
     # 5. Send Telegram Briefing
     log.info("Step 4: Sending Telegram briefing")
@@ -131,6 +132,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     # Check for DRY_RUN environment variable or flag
-    is_dry_run = getattr(args, "dry_run", False) or os.getenv("DRY_RUN", "True").lower() == "true"
+    is_dry_run = getattr(args, "dry_run", False) or os.getenv("DRY_RUN", "False").lower() == "true"
     
     asyncio.run(run_daily_scan(market=args.market, dry_run=is_dry_run))

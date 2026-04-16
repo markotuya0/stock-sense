@@ -7,12 +7,12 @@ from config import settings
 
 import hashlib
 import secrets
-from config import settings
 
 log = structlog.get_logger()
 
 # JWT configuration
 ALGORITHM = "HS256"
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)

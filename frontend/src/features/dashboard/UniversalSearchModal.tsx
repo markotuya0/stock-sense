@@ -1,27 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { Search, X, TrendingUp, Globe } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import apiClient from '../../api/client';
 
 export const UniversalSearchModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (query.length < 2) {
+    const normalized = query.trim();
+    if (normalized.length < 2) {
       setResults([]);
+      setLoading(false);
       return;
     }
-    
-    // Simulate API call to /search?q=...
-    const common = [
-      { symbol: "NVDA", name: "NVIDIA Corporation", market: "US" },
-      { symbol: "AAPL", name: "Apple Inc.", market: "US" },
-      { symbol: "TSLA", name: "Tesla, Inc.", market: "US" },
-      { symbol: "ZENITHB", name: "Zenith Bank Plc", market: "NGX" },
-      { symbol: "GTCO", name: "Guaranty Trust Holding Co", market: "NGX" },
-    ];
-    setResults(common.filter(s => s.symbol.includes(query.toUpperCase()) || s.name.toUpperCase().includes(query.toUpperCase())));
+
+    const timeout = window.setTimeout(async () => {
+      setLoading(true);
+      try {
+        const response = await apiClient.get('/search/', { params: { q: normalized } });
+        setResults(response.data || []);
+      } catch (error) {
+        console.error('Search failed', error);
+        setResults([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 250);
+
+    return () => window.clearTimeout(timeout);
   }, [query]);
 
   if (!isOpen) return null;
@@ -44,7 +53,9 @@ export const UniversalSearchModal: React.FC<{ isOpen: boolean; onClose: () => vo
         </div>
         
         <div className="max-h-[60vh] overflow-y-auto">
-          {results.length > 0 ? (
+          {loading ? (
+            <div className="p-12 text-center text-zinc-500">Searching...</div>
+          ) : results.length > 0 ? (
             <div className="p-2">
               <div className="px-4 py-2 text-[10px] uppercase font-bold text-zinc-600 tracking-widest">Matches</div>
               {results.map((res, i) => (
@@ -74,7 +85,7 @@ export const UniversalSearchModal: React.FC<{ isOpen: boolean; onClose: () => vo
             </div>
           ) : query.length >= 2 ? (
             <div className="p-12 text-center text-zinc-500">
-               No matching institutional signals found.
+               No matching tickers found.
             </div>
           ) : (
             <div className="p-8 text-center text-zinc-600 text-sm italic">

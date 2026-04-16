@@ -46,8 +46,8 @@ async def add_process_time_header(request: Request, call_next):
 
 # Routes
 app.include_router(auth.router)
-app.include_router(search.router)
-app.include_router(signals.router)
+app.include_router(search.router, prefix="/api/v1")
+app.include_router(signals.router, prefix="/api/v1")
 app.include_router(analysis.router)
 app.include_router(payment.router)
 app.include_router(accuracy.router, prefix="/api/v1")

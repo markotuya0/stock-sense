@@ -82,8 +82,11 @@ Key variables to configure:
 ```env
 DEBUG=True                          # Enable debug mode
 LOG_LEVEL=INFO                      # Logging level
-DATABASE_URL=sqlite:///stock.db     # Database connection
+DATABASE_URL=postgresql+psycopg2://...  # Supabase/Postgres connection
 API_PORT=8000                       # Server port
+NGX_DATA_API_URL=https://...        # Required live NGX data source
+WHATSAPP_API_TOKEN=...              # Required for WhatsApp enterprise delivery
+WHATSAPP_API_URL=https://graph.facebook.com/v19.0/messages
 ```
 
 See `.env.example` for all available options.

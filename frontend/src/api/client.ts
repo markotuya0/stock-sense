@@ -9,7 +9,18 @@ const apiClient = axios.create({
 
 // Interceptor to add auth token
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('access_token');
+  const directToken = localStorage.getItem('access_token');
+  let persistedToken: string | null = null;
+  try {
+    const raw = localStorage.getItem('auth-storage');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      persistedToken = parsed?.state?.token || null;
+    }
+  } catch (_error) {
+    persistedToken = null;
+  }
+  const token = directToken || persistedToken;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -23,6 +34,7 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       // Handle logout/refresh logic here
       localStorage.removeItem('access_token');
+      localStorage.removeItem('auth-storage');
       if (window.location.pathname !== '/login') {
         window.location.href = '/login';
       }

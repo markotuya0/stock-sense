@@ -6,7 +6,7 @@ import apiClient from '../api/client';
 
 export const AccuracyPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<any>({ overall_accuracy: 0, total_signals: 0, avg_gain: 0, win_rate_30d: 0 });
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
 
   useEffect(() => {
@@ -50,10 +50,10 @@ export const AccuracyPage: React.FC = () => {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-12">
           {[
-            { label: "Overall Accuracy", value: `${stats.overall_accuracy}%`, icon: Target, color: "text-green-500" },
-            { label: "Total Signals", value: stats.total_signals, icon: Clock, color: "text-blue-500" },
-            { label: "Avg. ROI / Signal", value: `+${stats.avg_gain}%`, icon: TrendingUp, color: "text-purple-500" },
-            { label: "30D Win Rate", value: `${stats.win_rate_30d}%`, icon: Award, color: "text-yellow-500" }
+            { label: "Overall Accuracy", value: `${stats.overall_accuracy ?? 0}%`, icon: Target, color: "text-green-500" },
+            { label: "Total Signals", value: stats.total_signals ?? 0, icon: Clock, color: "text-blue-500" },
+            { label: "Avg. ROI / Signal", value: `${(stats.avg_gain ?? 0) >= 0 ? '+' : ''}${stats.avg_gain ?? 0}%`, icon: TrendingUp, color: "text-purple-500" },
+            { label: "30D Win Rate", value: `${stats.win_rate_30d ?? 0}%`, icon: Award, color: "text-yellow-500" }
           ].map((item, i) => (
             <div key={i} className="bg-zinc-950 border border-zinc-900 p-6 rounded-2xl">
               <item.icon size={20} className={`${item.color} mb-4`} />
@@ -98,10 +98,12 @@ export const AccuracyPage: React.FC = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="px-8 py-6 text-green-500 font-bold">+{row.avg_return}%</td>
+                    <td className={`px-8 py-6 font-bold ${(row.avg_return ?? 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                      {(row.avg_return ?? 0) >= 0 ? '+' : ''}{row.avg_return ?? 0}%
+                    </td>
                     <td className="px-8 py-6">
                       <span className="px-3 py-1 bg-green-500/10 text-green-500 text-[10px] font-bold rounded-full uppercase tracking-tighter border border-green-500/20">
-                        Outperforming
+                        {(row.win_rate ?? 0) >= 70 ? 'Outperforming' : 'Watchlist'}
                       </span>
                     </td>
                   </tr>
