@@ -1,15 +1,16 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+from slowapi import _rate_limit_exceeded_handler
 import structlog
 import time
 
 from config import settings
 from routers import auth, search, signals, analysis, payment
 from db.session import engine, Base
+from middleware.security_headers import SecurityHeadersMiddleware
+from middleware.rate_limit import limiter
 
 # Setup logger
 log = structlog.get_logger()
@@ -17,8 +18,9 @@ log = structlog.get_logger()
 # Initialize tables (Note: Use Alembic for production migrations)
 Base.metadata.create_all(bind=engine)
 
-# Setup Rate Limiter
-limiter = Limiter(key_func=get_remote_address)
+# Initialize tables
+Base.metadata.create_all(bind=engine)
+
 app = FastAPI(title="StockSense AI API", version="0.2.0")
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -26,11 +28,12 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # Middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, restrict to settings.CORS_ORIGINS
+    allow_origins=[settings.FRONTEND_URL] if settings.is_production else ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 @app.middleware("http")

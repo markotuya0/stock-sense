@@ -22,7 +22,9 @@ export const SignalCard: React.FC<{ signal: any }> = ({ signal }) => {
         </div>
         <div>
           <p className="text-[10px] text-muted uppercase tracking-wider mb-1">Price Target</p>
-          <p className="text-lg font-bold text-accent">₦{signal.price_target}</p>
+          <p className="text-lg font-bold text-accent">
+            {signal.market === 'NGX' ? '₦' : '$'}{signal.price_target}
+          </p>
         </div>
       </div>
 

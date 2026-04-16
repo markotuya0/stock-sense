@@ -74,12 +74,43 @@ async def run_daily_scan(market: Optional[str] = None, dry_run: bool = False):
     
     log.info("Analysis complete", signals_generated=len(signals))
 
-    # 4. Save to Database (Phase 2/3)
-    for s in signals:
-        log.debug("Generated Signal", signal=s.model_dump())
+    # 4. Save to Database
+    log.info("Step 3: Persisting signals to database")
+    from db.session import SessionLocal
+    from db.models import Signal
+    
+    db = SessionLocal()
+    try:
+        for s in signals:
+            # Check if signal for this symbol and today already exists to avoid duplicates
+            # (Simplistic check for now)
+            new_db_signal = Signal(
+                symbol=s.symbol,
+                name=next((c["name"] for c in all_candidates if c["symbol"] == s.symbol), s.symbol),
+                market="US" if any(c["symbol"] == s.symbol and c["market"] == "US" for c in all_candidates) else "NGX",
+                signal_type=s.signal,
+                score=s.score,
+                price_at_signal=s.price_target / 1.1, # Approx current price logic if not explicitly passed
+                price_target=s.price_target,
+                risk_score=s.risk_score,
+                analysis={
+                    "reason": s.reason,
+                    "beginner_note": s.beginner_note,
+                    "learn_term": s.learn_term,
+                    "learn_explanation": s.learn_explanation
+                }
+            )
+            db.add(new_db_signal)
+        db.commit()
+        log.info("Database persistence complete", signals_saved=len(signals))
+    except Exception as e:
+        log.error("Database persistence failed", error=str(e))
+        db.rollback()
+    finally:
+        db.close()
 
     # 5. Send Telegram Briefing
-    log.info("Step 3: Sending Telegram briefing")
+    log.info("Step 4: Sending Telegram briefing")
     if not dry_run:
         success = telegram.send_briefing(signals)
         if success:

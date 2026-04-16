@@ -24,6 +24,11 @@ class AgentState(TypedDict):
     risk_score: Optional[float]
     alpha_conviction: Optional[float]
     
+    # Agent Outputs
+    analyst_output: Optional[dict]
+    critic_output: Optional[dict]
+    report_data: Optional[dict]
+    
     # Final Output
     is_verified: bool
     final_recommendation: Optional[str]

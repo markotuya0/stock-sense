@@ -1,32 +1,33 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../features/dashboard/DashboardLayout';
 import { SignalCard } from '../features/signals/SignalCard';
 import { AnalysisTerminal } from '../features/signals/AnalysisTerminal';
+import { SignalSkeleton } from '../components/ui/Skeleton';
+import axios from 'axios';
 
-const mockSignals = [
-  {
-    symbol: 'ZENITHB',
-    name: 'Zenith Bank Plc',
-    market: 'NGX',
-    signal_type: 'STRONG_BUY',
-    score: 9.2,
-    price_target: 48.5,
-    risk_score: 3,
-    analysis: { reason: "Strong dividend yield and robust capital adequacy ratios despite macro headwinds." }
-  },
-  {
-    symbol: 'NVDA',
-    name: 'NVIDIA Corp',
-    market: 'US',
-    signal_type: 'BUY',
-    score: 8.7,
-    price_target: 1100.0,
-    risk_score: 5,
-    analysis: { reason: "Generative AI demand remains unquenched. Data center revenue projected to beat expectations." }
-  }
-];
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export const DashboardPage: React.FC = () => {
+  const [signals, setSignals] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchSignals = async () => {
+      try {
+        const token = JSON.parse(localStorage.getItem('auth-storage') || '{}')?.state?.token;
+        const response = await axios.get(`${API_URL}/signals`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setSignals(response.data);
+      } catch (err) {
+        console.error("Failed to fetch signals", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSignals();
+  }, []);
   return (
     <DashboardLayout>
       <div className="max-w-6xl mx-auto">
@@ -43,7 +44,17 @@ export const DashboardPage: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
            <div className="lg:col-span-1 space-y-6">
-              {mockSignals.map(s => <SignalCard key={s.symbol} signal={s} />)}
+              {isLoading ? (
+                <div className="space-y-6">
+                  {[1, 2, 3].map(i => <SignalSkeleton key={i} />)}
+                </div>
+              ) : signals.length > 0 ? (
+                signals.map(s => <SignalCard key={s.id || s.symbol} signal={s} />)
+              ) : (
+                <div className="p-12 text-center border-2 border-dashed border-white/5 rounded-xl">
+                  <p className="text-muted text-xs uppercase tracking-widest">No active signals today</p>
+                </div>
+              )}
            </div>
            <div className="lg:col-span-2">
               <div className="mb-6 flex items-center justify-between">

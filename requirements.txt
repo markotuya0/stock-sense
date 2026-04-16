@@ -8,6 +8,8 @@ structlog
 uvicorn
 python-jose[cryptography]
 passlib[bcrypt]
+slowapi
+httpx
 
 # Agents & AI
 langgraph==0.2.60

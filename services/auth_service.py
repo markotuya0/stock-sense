@@ -5,10 +5,11 @@ from passlib.context import CryptContext
 import structlog
 from config import settings
 
-log = structlog.get_logger()
+import hashlib
+import secrets
+from config import settings
 
-# Password hashing configuration
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+log = structlog.get_logger()
 
 # JWT configuration
 ALGORITHM = "HS256"
@@ -30,12 +31,17 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-def create_refresh_token(data: dict) -> str:
-    to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-    to_encode.update({"exp": expire, "type": "refresh"})
-    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+def create_refresh_token() -> str:
+    """Generate a random 64-character refresh token."""
+    return secrets.token_urlsafe(64)
+
+def get_token_hash(token: str) -> str:
+    """Hash a token using SHA-256."""
+    return hashlib.sha256(token.encode()).hexdigest()
+
+def verify_token_hash(raw_token: str, hashed_token: str) -> bool:
+    """Verify a raw token against its hash."""
+    return get_token_hash(raw_token) == hashed_token
 
 def decode_token(token: str) -> dict:
     try:

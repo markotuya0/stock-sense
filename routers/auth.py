@@ -8,6 +8,9 @@ from db.models import User
 from services import auth_service
 from schemas.auth import Token, UserCreate, UserOut
 from config import settings
+from fastapi import Response
+from db.models import RefreshToken
+from datetime import datetime
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -34,6 +37,7 @@ def signup(user_in: UserCreate, db: Session = Depends(get_db)) -> Any:
 
 @router.post("/login", response_model=Token)
 def login(
+    response: Response,
     db: Session = Depends(get_db), 
     form_data: OAuth2PasswordRequestForm = Depends()
 ) -> Any:
@@ -48,10 +52,64 @@ def login(
     elif not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
 
+    # 1. Create Access Token
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = auth_service.create_access_token(
+        {"sub": user.email}, expires_delta=access_token_expires
+    )
+
+    # 2. Create and Store Refresh Token
+    raw_refresh_token = auth_service.create_refresh_token()
+    token_hash = auth_service.get_token_hash(raw_refresh_token)
+    
+    db_refresh_token = RefreshToken(
+        user_id=user.id,
+        token_hash=token_hash,
+        expires_at=datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    )
+    db.add(db_refresh_token)
+    db.commit()
+
+    # 3. Set HttpOnly Cookie
+    response.set_cookie(
+        key="refresh_token",
+        value=raw_refresh_token,
+        httponly=True,
+        secure=settings.is_production, # HTTPS only in prod
+        samesite="lax" if not settings.is_production else "strict",
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
+        path="/auth/refresh" # Only send to refresh endpoint
+    )
+
     return {
-        "access_token": auth_service.create_access_token(
-            {"sub": user.email}, expires_delta=access_token_expires
-        ),
+        "access_token": access_token,
+        "token_type": "bearer",
+    }
+
+@router.post("/refresh", response_model=Token)
+def refresh_token(
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db)
+) -> Any:
+    """Refresh the access token using the refresh_token cookie."""
+    raw_token = request.cookies.get("refresh_token")
+    if not raw_token:
+        raise HTTPException(status_code=401, detail="Refresh token missing")
+
+    token_hash = auth_service.get_token_hash(raw_token)
+    db_token = db.query(RefreshToken).filter(
+        RefreshToken.token_hash == token_hash,
+        RefreshToken.expires_at > datetime.utcnow()
+    ).first()
+
+    if not db_token:
+        raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
+
+    # Issue new access token
+    access_token = auth_service.create_access_token({"sub": db_token.user.email})
+    
+    return {
+        "access_token": access_token,
         "token_type": "bearer",
     }
