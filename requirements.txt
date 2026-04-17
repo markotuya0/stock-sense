@@ -1,5 +1,6 @@
 # Core Backend
 fastapi==0.115.0
+starlette>=0.37.2,<0.39.0
 sqlalchemy==2.0.36
 pydantic==2.10.0
 pydantic-settings
@@ -10,6 +11,7 @@ python-jose[cryptography]
 passlib[bcrypt]
 slowapi
 httpx
+sse-starlette
 
 # Agents & AI
 langgraph==0.2.60
