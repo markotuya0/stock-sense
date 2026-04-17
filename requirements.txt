@@ -28,6 +28,7 @@ ta  # Technical analysis library for RSI, etc.
 # Database & Cache
 psycopg2-binary
 upstash-redis
+supabase
 
 # Testing & Dev
 pytest
