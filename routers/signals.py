@@ -213,7 +213,9 @@ def get_signal_detail(
     signal = db.query(Signal).filter(Signal.id == signal_id).first()
     if not signal:
         raise HTTPException(status_code=404, detail="Signal not found")
-    return {}
+    row = {c.name: getattr(signal, c.name) for c in Signal.__table__.columns}
+    row.update(_build_verification_payload(signal, db))
+    return row
 
 
 @router.get("/symbol/{symbol}")

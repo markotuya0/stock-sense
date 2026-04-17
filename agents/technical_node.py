@@ -1,15 +1,20 @@
 from typing import Dict
 import yfinance as yf
 from .state import AgentState
+import asyncio
 
-def technical_node(state: AgentState) -> Dict:
-    """Layer 3: Technical Indicators."""
+async def technical_node(state: AgentState) -> Dict:
+    """Layer 3: Technical Indicators. Uses cached yfinance data from researcher."""
     ticker = state["ticker"]
     logs = state.get("logs", [])
     logs.append(f"> [TECHNICAL] Calculating RSI and MACD for {ticker}...")
-    
+
     try:
-        df = yf.Ticker(ticker).history(period="6mo")
+        # Use cached 6mo history from researcher node (avoids redundant API call)
+        df = state.get("yfinance_history_6mo")
+        if df is None or df.empty:
+            # Fallback: fetch if not in state
+            df = await asyncio.to_thread(lambda: yf.Ticker(ticker).history(period="6mo"))
         if len(df) < 30:
             return {"logs": logs + ["> [ERROR] Not enough data for technicals"]}
 

@@ -6,6 +6,7 @@ from .analyst_agent import analyst_agent
 from .arbiter_writer import arbiter_writer_agent
 from .technical_node import technical_node
 from .risk_node import risk_node
+from .nodes.critic_node import critic_node
 
 def create_pipeline():
     """Constructs the optimized 7-agent LangGraph pipeline."""
@@ -17,6 +18,7 @@ def create_pipeline():
     workflow.add_node("technical", technical_node)
     workflow.add_node("risk", risk_node)
     workflow.add_node("analyst", analyst_agent)
+    workflow.add_node("critic", critic_node)
     workflow.add_node("synthesizer", arbiter_writer_agent)
 
     # Define Edges
@@ -25,7 +27,8 @@ def create_pipeline():
     workflow.add_edge("macro", "technical")
     workflow.add_edge("technical", "risk")
     workflow.add_edge("risk", "analyst")
-    workflow.add_edge("analyst", "synthesizer")
+    workflow.add_edge("analyst", "critic")
+    workflow.add_edge("critic", "synthesizer")
     workflow.add_edge("synthesizer", END)
 
     return workflow.compile()

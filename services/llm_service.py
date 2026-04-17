@@ -50,12 +50,46 @@ async def call_gemini(system_prompt: str, user_prompt: str, model: str = "gemini
         log.error("Gemini API error", error=str(e))
         return "{}"
 
-def clean_json_response(raw: str) -> dict:
-    """Extract and parse JSON from AI response."""
-    try:
-        # Strip markdown fences
-        cleaned = re.sub(r"```(?:json)?\n?", "", raw).strip().rstrip("```").strip()
-        return json.loads(cleaned)
-    except Exception as e:
-        log.error("JSON parsing error", error=str(e), raw=raw[:100])
+def clean_json_response(raw: str, max_retries: int = 2) -> dict:
+    """Extract and parse JSON from AI response. Handle truncated responses gracefully."""
+    if not raw:
         return {}
+
+    # Strip markdown fences
+    cleaned = re.sub(r"```(?:json)?\n?", "", raw).strip().rstrip("```").strip()
+
+    # Try to parse JSON
+    for attempt in range(max_retries):
+        try:
+            return json.loads(cleaned)
+        except json.JSONDecodeError as e:
+            # If JSON is incomplete/truncated, try to fix it
+            if attempt == 0:
+                # Try adding common closing brackets if response seems truncated
+                if cleaned.endswith('"'):
+                    # Likely truncated string, close it
+                    test_json = cleaned + "}"
+                    try:
+                        return json.loads(test_json)
+                    except:
+                        pass
+
+                if not cleaned.endswith("}"):
+                    # Try closing with a bracket
+                    for close_attempt in [cleaned + "}", cleaned + "]}",  cleaned + "]}"]:
+                        try:
+                            return json.loads(close_attempt)
+                        except:
+                            continue
+
+            if attempt == max_retries - 1:
+                log.error(
+                    "JSON parsing failed after retries",
+                    error=str(e),
+                    raw_length=len(raw),
+                    cleaned_length=len(cleaned),
+                    raw_preview=raw[:150]
+                )
+                return {}
+
+    return {}

@@ -2,15 +2,23 @@ from typing import Dict
 import yfinance as yf
 import numpy as np
 from .state import AgentState
+import asyncio
+import structlog
 
-def risk_node(state: AgentState) -> Dict:
-    """Layer 4: Volatility and Liquidity."""
+log = structlog.get_logger()
+
+async def risk_node(state: AgentState) -> Dict:
+    """Layer 4: Volatility and Liquidity. Uses cached yfinance data from researcher."""
     ticker = state["ticker"]
     logs = state.get("logs", [])
     logs.append("> [RISK] Analyzing volatility and liquidity depth...")
-    
+
     try:
-        df = yf.Ticker(ticker).history(period="1mo")
+        # Use cached 1mo history from researcher node (avoids redundant API call)
+        df = state.get("yfinance_history_1mo")
+        if df is None or df.empty:
+            # Fallback: fetch if not in state
+            df = await asyncio.to_thread(lambda: yf.Ticker(ticker).history(period="1mo"))
         # Annualized Volatility
         returns = np.log(df['Close'] / df['Close'].shift(1))
         vol = returns.std() * np.sqrt(252)
@@ -30,5 +38,10 @@ def risk_node(state: AgentState) -> Dict:
             "logs": logs + [f"> [RISK] Volatility: {vol:.2%}, Liquidity Ratio: {liquidity_ratio:.2f}"],
             "steps_completed": state.get("steps_completed", []) + ["risk"]
         }
-    except:
-        return {"risk_score": 0.5, "logs": logs}
+    except Exception as e:
+        log.error("Risk node failed", error=str(e))
+        return {
+            "risk_score": 0.5,
+            "logs": logs + [f"> [ERROR] Risk calculation failed: {str(e)}"],
+            "steps_completed": state.get("steps_completed", []) + ["risk"]
+        }
