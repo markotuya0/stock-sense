@@ -1,11 +1,12 @@
 import asyncio
 import json
 from datetime import datetime
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request, Depends, HTTPException
 from sse_starlette.sse import EventSourceResponse
 from agents.graph import create_pipeline
 from middleware.tier_guard import require_pro
 from middleware.auth import get_current_user
+from services.budget_service import check_budget
 
 router = APIRouter(prefix="/api/v1/analysis", tags=["analysis"])
 
@@ -17,9 +18,18 @@ async def stream_analysis(
     supabase_user: dict = Depends(require_pro)
 ):
     """
-    Streams the 6-layer agent analysis in real-time using SSE.
-    Requires PRO tier or higher.
+    Streams the 7-layer agent analysis in real-time using SSE.
+    Requires PRO tier or higher. Enforces daily API budget limits.
     """
+    # Check budget before starting analysis
+    user_id = supabase_user.get("id")
+    budget_ok = await check_budget(user_id)
+    if not budget_ok:
+        raise HTTPException(
+            status_code=429,
+            detail="Daily API budget exceeded. Please try again tomorrow."
+        )
+
     market = "NGX" if ticker.upper().endswith(".NG") else "US"
 
     async def event_generator():
@@ -27,7 +37,7 @@ async def stream_analysis(
         initial_state = {
             "ticker": ticker,
             "market": market,
-            "user_id": supabase_user.get("id"),
+            "user_id": user_id,
             "tier": supabase_user.get("tier", "FREE"),
             "steps_completed": [],
             "logs": [],

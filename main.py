@@ -12,6 +12,7 @@ from db.session import engine, Base, SessionLocal
 from db.models import MarketTicker
 from middleware.security_headers import SecurityHeadersMiddleware
 from middleware.rate_limit import limiter
+from services.accuracy_service import populate_accuracy_records
 from apscheduler.schedulers.background import BackgroundScheduler
 
 # Setup logger
@@ -108,11 +109,15 @@ async def startup_event():
   scheduler = BackgroundScheduler()
   # Run daily scan at 6am UTC
   scheduler.add_job(run_daily_scan, 'cron', hour=6, minute=0)
+  # Populate accuracy records daily at 9pm UTC (6 hours after scan completes)
+  scheduler.add_job(populate_accuracy_records, 'cron', hour=21, minute=0)
   scheduler.start()
-  log.info("Background scheduler started. Daily scan scheduled for 6:00 AM UTC")
+  log.info("Background scheduler started. Daily scan scheduled for 6:00 AM UTC, accuracy population at 9:00 PM UTC")
 
   # Also run scan immediately on startup to populate signals
   run_daily_scan()
+  # Run accuracy population on startup as well
+  await populate_accuracy_records()
 
 # Middleware
 app.add_middleware(

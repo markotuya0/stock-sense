@@ -1,6 +1,8 @@
 from typing import Any, Dict
 from .state import AgentState
 from services.llm_service import call_groq, clean_json_response
+from services.cache_service import CacheService
+from services.budget_service import record_spend
 import yfinance as yf
 import json
 import asyncio
@@ -20,6 +22,9 @@ async def researcher_agent(state: AgentState) -> Dict:
     try:
         # Fetch all yfinance data in thread pool (researcher, technical, risk all use this)
         # Avoids calling yfinance 3 times
+        market = state.get("market", "US")
+        cache_key_6mo = CacheService.get_key("layer1_signal", market=market, symbol=ticker)
+
         async def fetch_all_data():
             t = yf.Ticker(ticker)
             return {
@@ -29,14 +34,28 @@ async def researcher_agent(state: AgentState) -> Dict:
                 "history_1mo": t.history(period="1mo"),
             }
 
-        data = await asyncio.to_thread(fetch_all_data)
+        # Check cache for historical data
+        cached = await CacheService.get(cache_key_6mo)
+        if cached:
+            log.debug("Using cached yfinance data", ticker=ticker)
+            data = cached
+        else:
+            data = await asyncio.to_thread(fetch_all_data)
+            # Cache for 4 hours (14400s)
+            await CacheService.set(cache_key_6mo, data, CacheService.get_ttl("layer1_signal"))
         info = data["info"]
         news = data["news"]
 
         user_prompt = f"Stock: {ticker}\nSummary: {info.get('longBusinessSummary', 'N/A')}\nNews: {json.dumps(news)}"
 
-        raw_res = await call_groq(SYSTEM_PROMPT, user_prompt, max_tokens=1000)
+        llm_response = await call_groq(SYSTEM_PROMPT, user_prompt, max_tokens=1000)
+        raw_res = llm_response["content"]
         res = clean_json_response(raw_res)
+
+        # Record spending
+        user_id = state.get("user_id")
+        if user_id:
+            await record_spend(user_id, "llama-3.1-8b-instant", llm_response["tokens_in"], llm_response["tokens_out"])
 
         return {
             "research_data": res.get("summary", "No summary found."),

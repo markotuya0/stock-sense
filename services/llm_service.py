@@ -12,8 +12,8 @@ log = structlog.get_logger()
 groq_client = AsyncGroq(api_key=settings.GROQ_API_KEY)
 genai.configure(api_key=settings.GOOGLE_API_KEY)
 
-async def call_groq(system_prompt: str, user_prompt: str, model: str = "llama-3.1-8b-instant", max_tokens: int = 800) -> str:
-    """Call Groq API with robust error handling."""
+async def call_groq(system_prompt: str, user_prompt: str, model: str = "llama-3.1-8b-instant", max_tokens: int = 800) -> dict:
+    """Call Groq API with robust error handling. Returns dict with content and usage."""
     try:
         response = await groq_client.chat.completions.create(
             model=model,
@@ -25,13 +25,17 @@ async def call_groq(system_prompt: str, user_prompt: str, model: str = "llama-3.
             max_tokens=max_tokens,
             temperature=0.1,
         )
-        return response.choices[0].message.content
+        return {
+            "content": response.choices[0].message.content,
+            "tokens_in": response.usage.prompt_tokens,
+            "tokens_out": response.usage.completion_tokens,
+        }
     except Exception as e:
         log.error("Groq API error", error=str(e))
-        return "{}"
+        return {"content": "{}", "tokens_in": 0, "tokens_out": 0}
 
-async def call_gemini(system_prompt: str, user_prompt: str, model: str = "gemini-2.0-flash", max_tokens: int = 2000) -> str:
-    """Call Gemini API. Note: using gemini-1.5-flash as default stable version."""
+async def call_gemini(system_prompt: str, user_prompt: str, model: str = "gemini-2.0-flash", max_tokens: int = 2000) -> dict:
+    """Call Gemini API. Returns dict with content and usage."""
     try:
         gemini_model = genai.GenerativeModel(
             model_name=f"models/{model}" if not model.startswith("models/") else model,
@@ -45,10 +49,17 @@ async def call_gemini(system_prompt: str, user_prompt: str, model: str = "gemini
                 temperature=0.1,
             )
         )
-        return response.text
+        usage = response.usage_metadata if hasattr(response, 'usage_metadata') else None
+        tokens_in = usage.prompt_token_count if usage else 0
+        tokens_out = usage.candidates_token_count if usage else 0
+        return {
+            "content": response.text,
+            "tokens_in": tokens_in,
+            "tokens_out": tokens_out,
+        }
     except Exception as e:
         log.error("Gemini API error", error=str(e))
-        return "{}"
+        return {"content": "{}", "tokens_in": 0, "tokens_out": 0}
 
 def clean_json_response(raw: str, max_retries: int = 2) -> dict:
     """Extract and parse JSON from AI response. Handle truncated responses gracefully."""

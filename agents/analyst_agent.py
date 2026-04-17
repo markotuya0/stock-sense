@@ -1,6 +1,7 @@
 from typing import Any, Dict
 from .state import AgentState
 from services.llm_service import call_gemini, clean_json_response
+from services.budget_service import record_spend
 
 SYSTEM_PROMPT = """You are the Lead Investment Analyst for StockSense AI.
 Using technicals, macro, and research data, you must generate a high-conviction signal.
@@ -24,9 +25,15 @@ async def analyst_agent(state: AgentState) -> Dict:
     
     try:
         # Using Gemini for reasoning
-        raw_res = await call_gemini(SYSTEM_PROMPT, str(context), model="gemini-1.5-flash")
+        llm_response = await call_gemini(SYSTEM_PROMPT, str(context), model="gemini-1.5-flash")
+        raw_res = llm_response["content"]
         res = clean_json_response(raw_res)
-        
+
+        # Record spending
+        user_id = state.get("user_id")
+        if user_id:
+            await record_spend(user_id, "gemini-2.0-flash-exp", llm_response["tokens_in"], llm_response["tokens_out"])
+
         return {
             "analyst_output": res,
             "logs": logs + [f"> [ANALYST] Generated conviction score: {res.get('score', 'N/A')}"],

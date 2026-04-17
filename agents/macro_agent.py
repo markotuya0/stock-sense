@@ -1,6 +1,7 @@
 from typing import Any, Dict
 from .state import AgentState
 from services.llm_service import call_groq, clean_json_response
+from services.budget_service import record_spend
 import httpx
 import structlog
 
@@ -61,8 +62,14 @@ Current Data:
 
 Provide macro risk score (0-1) and key market risks."""
 
-        raw_res = await call_groq(SYSTEM_PROMPT, user_prompt, max_tokens=600)
+        llm_response = await call_groq(SYSTEM_PROMPT, user_prompt, max_tokens=600)
+        raw_res = llm_response["content"]
         res = clean_json_response(raw_res)
+
+        # Record spending
+        user_id = state.get("user_id")
+        if user_id:
+            await record_spend(user_id, "llama-3.1-8b-instant", llm_response["tokens_in"], llm_response["tokens_out"])
 
         # Validate macro_score is in valid range
         macro_score = res.get("macro_score", 0.5)
