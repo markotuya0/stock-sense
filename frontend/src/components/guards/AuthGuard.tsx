@@ -8,14 +8,18 @@ interface AuthGuardProps {
 
 export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuthStore();
+  const { user, isInitialized, initialize } = useAuthStore();
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    initialize();
+  }, [initialize]);
+
+  useEffect(() => {
+    if (isInitialized && !user) {
       navigate('/login');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isInitialized, user, navigate]);
 
-  if (!isAuthenticated) return null;
+  if (!isInitialized || !user) return null;
   return <>{children}</>;
 };

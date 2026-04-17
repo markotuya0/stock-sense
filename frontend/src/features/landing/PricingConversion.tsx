@@ -7,12 +7,12 @@ import { useAuthStore } from '../../store/auth/useAuthStore';
 import { paymentApi } from '../../api/payment';
 
 export const PricingConversion: React.FC<{id?: string}> = ({id}) => {
-  const { isAuthenticated } = useAuthStore();
+  const { user } = useAuthStore();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleSubscribe = async () => {
-    if (!isAuthenticated) {
+    if (!user) {
       navigate('/signup');
       return;
     }
