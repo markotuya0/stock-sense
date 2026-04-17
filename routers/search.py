@@ -2,37 +2,48 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from typing import List
 from db.session import get_db
-from db.models import User, SearchHistory
+from db.models import SearchHistory, MarketTicker, MarketSnapshot
 from middleware.auth import get_current_user
 import structlog
 
 log = structlog.get_logger()
 router = APIRouter(prefix="/search", tags=["search"])
 
-from db.models import User, SearchHistory, MarketTicker, MarketSnapshot
 import yfinance as yf
+
 
 @router.get("/")
 def search_stock(
-    q: str, 
+    q: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    supabase_user: dict = Depends(get_current_user)
 ):
     """Universal stock search. Queries DB for known tickers and falls back to yfinance."""
     normalized_q = q.strip()
     if not normalized_q:
         return []
 
-    log.info("Stock search", query=normalized_q, user_id=current_user.id)
+    log.info("Stock search", query=normalized_q, user_id=supabase_user.get("id"))
 
-    db.add(SearchHistory(user_id=current_user.id, query=normalized_q))
-    db.commit()
-    
+    # Log search history without FK constraint (Supabase IDs don't exist in our users table)
+    from uuid import UUID
+    try:
+        search_rec = SearchHistory(
+            user_id=UUID(supabase_user["id"]),
+            query=normalized_q
+        )
+        db.add(search_rec)
+        db.commit()
+    except Exception as e:
+        # FK constraint may fail for Supabase user IDs not in our users table
+        # Fall back to search without history persistence
+        log.warning("Search history skipped", error=str(e))
+
     # DB Search (Fast)
     db_results = db.query(MarketTicker).filter(
         (MarketTicker.symbol.ilike(f"%{normalized_q}%")) | (MarketTicker.name.ilike(f"%{normalized_q}%"))
     ).limit(5).all()
-    
+
     if db_results:
         payload = []
         for result in db_results:
@@ -52,7 +63,7 @@ def search_stock(
                 }
             )
         return payload
-        
+
     # Fallback: yfinance search (Global)
     try:
         yf_search = yf.Search(normalized_q, max_results=5).quotes

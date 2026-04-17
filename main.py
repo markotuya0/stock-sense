@@ -7,7 +7,7 @@ import structlog
 import time
 
 from config import settings
-from routers import auth, search, signals, analysis, payment, accuracy, portfolio, users, webhooks
+from routers import search, signals, analysis, payment, accuracy, portfolio, users, webhooks
 from db.session import engine, Base
 from middleware.security_headers import SecurityHeadersMiddleware
 from middleware.rate_limit import limiter
@@ -45,7 +45,9 @@ async def add_process_time_header(request: Request, call_next):
     return response
 
 # Routes
-app.include_router(auth.router)
+# Auth router removed - Supabase handles authentication
+# Keep router commented out in case needed for backward compatibility
+# app.include_router(auth.router)
 app.include_router(search.router, prefix="/api/v1")
 app.include_router(signals.router, prefix="/api/v1")
 app.include_router(analysis.router)

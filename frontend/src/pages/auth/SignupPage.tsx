@@ -13,7 +13,7 @@ export const SignupPage: React.FC = () => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await signup({ email, password, full_name: 'New Analyst' });
+      await signup(email, password, 'New Analyst');
       navigate('/login');
     } catch (err) {
       console.error("Signup failed", err);
@@ -23,7 +23,7 @@ export const SignupPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#020617] flex items-center justify-center p-6 relative overflow-hidden">
       <div className="mesh-grain absolute inset-0 opacity-30" />
-      
+
       <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-12">
           <Link to="/" className="inline-flex items-center gap-2 mb-8">

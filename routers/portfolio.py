@@ -1,18 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from db.session import get_db
-from db.models import User
+from db.models import User, PortfolioItem
 from middleware.auth import get_current_user
 from typing import List
 from pydantic import BaseModel, Field
-
-router = APIRouter(prefix="/portfolio", tags=["Portfolio"])
-
-from db.models import User, PortfolioItem
+from uuid import UUID
 import yfinance as yf
 import structlog
 
 log = structlog.get_logger()
+
+router = APIRouter(prefix="/portfolio", tags=["Portfolio"])
 
 
 class TradeInput(BaseModel):
@@ -21,10 +20,33 @@ class TradeInput(BaseModel):
     price: float = Field(gt=0)
     market: str = Field(default="US")
 
+
+def _get_or_create_user(db: Session, supabase_user: dict) -> User:
+    """Get existing user by email or create new one from Supabase user."""
+    email = supabase_user["email"]
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        user = User(
+            id=UUID(supabase_user["id"]),
+            email=email,
+            hashed_password="",  # No password - Supabase handles auth
+            full_name=supabase_user.get("full_name", ""),
+            tier=supabase_user.get("tier", "FREE"),
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    return user
+
+
 @router.get("/")
-def get_portfolio(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def get_portfolio(
+    db: Session = Depends(get_db),
+    supabase_user: dict = Depends(get_current_user)
+):
     """Returns the user's current holdings and P&L calculated using live market prices."""
-    holdings = db.query(PortfolioItem).filter(PortfolioItem.user_id == current_user.id).all()
+    user = _get_or_create_user(db, supabase_user)
+    holdings = db.query(PortfolioItem).filter(PortfolioItem.user_id == user.id).all()
 
     total_value = 0.0
     total_cost = 0.0
@@ -67,14 +89,20 @@ def get_portfolio(db: Session = Depends(get_db), current_user: User = Depends(ge
         "holdings": processed_holdings,
     }
 
+
 @router.post("/trade")
-def add_holding(payload: TradeInput, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def add_holding(
+    payload: TradeInput,
+    db: Session = Depends(get_db),
+    supabase_user: dict = Depends(get_current_user)
+):
     """Record a trade in the user's portfolio."""
+    user = _get_or_create_user(db, supabase_user)
     symbol = payload.symbol.upper()
     market = payload.market.upper()
 
     item = db.query(PortfolioItem).filter(
-        PortfolioItem.user_id == current_user.id,
+        PortfolioItem.user_id == user.id,
         PortfolioItem.symbol == symbol,
         PortfolioItem.market == market,
     ).first()
@@ -86,7 +114,7 @@ def add_holding(payload: TradeInput, db: Session = Depends(get_db), current_user
         item.avg_price = new_total_cost / new_total_shares
     else:
         item = PortfolioItem(
-            user_id=current_user.id,
+            user_id=user.id,
             symbol=symbol,
             shares=payload.shares,
             avg_price=payload.price,
@@ -100,10 +128,15 @@ def add_holding(payload: TradeInput, db: Session = Depends(get_db), current_user
 
 
 @router.delete("/{item_id}")
-def delete_holding(item_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def delete_holding(
+    item_id: str,
+    db: Session = Depends(get_db),
+    supabase_user: dict = Depends(get_current_user)
+):
+    user = _get_or_create_user(db, supabase_user)
     item = db.query(PortfolioItem).filter(
         PortfolioItem.id == item_id,
-        PortfolioItem.user_id == current_user.id,
+        PortfolioItem.user_id == user.id,
     ).first()
     if not item:
         raise HTTPException(status_code=404, detail="Holding not found")

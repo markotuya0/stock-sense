@@ -5,7 +5,7 @@ from pydantic import Field
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env", 
+        env_file=".env",
         env_file_encoding="utf-8",
         extra="ignore"
     )
@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     ENVIRONMENT: str = "development"  # development, staging, production
     LOG_LEVEL: str = "INFO"
+    FRONTEND_URL: str = Field(default="http://localhost:5173", env="FRONTEND_URL")
 
     # Security
     SECRET_KEY: str = Field(..., env="SECRET_KEY")
@@ -23,7 +24,11 @@ class Settings(BaseSettings):
 
     # Database
     DATABASE_URL: str = Field(..., env="DATABASE_URL")
-    
+
+    # Supabase
+    SUPABASE_URL: str = Field(..., env="SUPABASE_URL")
+    SUPABASE_SERVICE_KEY: str = Field(..., env="SUPABASE_SERVICE_KEY")
+
     # Cache (Upstash Redis)
     UPSTASH_REDIS_REST_URL: str = Field(..., env="UPSTASH_REDIS_REST_URL")
     UPSTASH_REDIS_REST_TOKEN: str = Field(..., env="UPSTASH_REDIS_REST_TOKEN")

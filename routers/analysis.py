@@ -5,18 +5,20 @@ from fastapi import APIRouter, Request, Depends
 from sse_starlette.sse import EventSourceResponse
 from agents.graph import create_pipeline
 from middleware.tier_guard import require_pro
-from db.models import User
+from middleware.auth import get_current_user
 
 router = APIRouter(prefix="/api/v1/analysis", tags=["analysis"])
 
+
 @router.get("/stream/{ticker}")
 async def stream_analysis(
-    ticker: str, 
+    ticker: str,
     request: Request,
-    current_user: User = Depends(require_pro)
+    supabase_user: dict = Depends(require_pro)
 ):
     """
-    Streams the 7-layer agent analysis in real-time using SSE.
+    Streams the 6-layer agent analysis in real-time using SSE.
+    Requires PRO tier or higher.
     """
     market = "NGX" if ticker.upper().endswith(".NG") else "US"
 
@@ -25,6 +27,8 @@ async def stream_analysis(
         initial_state = {
             "ticker": ticker,
             "market": market,
+            "user_id": supabase_user.get("id"),
+            "tier": supabase_user.get("tier", "FREE"),
             "steps_completed": [],
             "logs": [],
             "is_verified": False,

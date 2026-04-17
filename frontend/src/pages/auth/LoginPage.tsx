@@ -23,7 +23,7 @@ export const LoginPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#020617] flex items-center justify-center p-6 relative overflow-hidden">
       <div className="mesh-grain absolute inset-0 opacity-30" />
-      
+
       <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-12">
           <Link to="/" className="inline-flex items-center gap-2 mb-8">
@@ -89,7 +89,7 @@ export const LoginPage: React.FC = () => {
             </p>
           </div>
         </div>
-        
+
         <div className="mt-12 text-center">
              <span className="text-slate-700 font-mono text-[8px] uppercase tracking-[0.4em]">System Encrypted · AES-256 Protocol</span>
         </div>
