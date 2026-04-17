@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../../components/design-system/Button';
 import { useAuthStore } from '../../store/auth/useAuthStore';
-import { Shield, ArrowRight, Zap, Loader2 } from 'lucide-react';
+import { Shield, ArrowRight, Zap, Loader2, Eye, EyeOff } from 'lucide-react';
 
 export const SignupPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const { signup, isLoading, error } = useAuthStore();
 
@@ -55,14 +56,24 @@ export const SignupPage: React.FC = () => {
 
             <div className="space-y-2">
               <label className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold ml-1">Secure Access Key (Password)</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-slate-950 border border-white/10 rounded-sm py-3 px-4 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors font-mono"
-                placeholder="Minimum 8 characters"
-                required
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full bg-slate-950 border border-white/10 rounded-sm py-3 px-4 pr-10 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors font-mono"
+                  placeholder="Minimum 8 characters"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
+              </div>
             </div>
 
             <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-sm mb-6 flex items-start gap-4">
