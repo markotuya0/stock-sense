@@ -12,6 +12,7 @@ passlib[bcrypt]
 slowapi
 httpx
 sse-starlette
+apscheduler
 
 # Agents & AI
 langgraph==0.2.60

@@ -8,9 +8,11 @@ import time
 
 from config import settings
 from routers import search, signals, analysis, payment, accuracy, portfolio, users, webhooks
-from db.session import engine, Base
+from db.session import engine, Base, SessionLocal
+from db.models import MarketTicker
 from middleware.security_headers import SecurityHeadersMiddleware
 from middleware.rate_limit import limiter
+from apscheduler.schedulers.background import BackgroundScheduler
 
 # Setup logger
 log = structlog.get_logger()
@@ -21,9 +23,96 @@ Base.metadata.create_all(bind=engine)
 # Initialize tables
 Base.metadata.create_all(bind=engine)
 
+def seed_market_tickers():
+  """Seed market_tickers table with popular US and NGX stocks on first boot."""
+  db = SessionLocal()
+  try:
+    # Check if table is already seeded
+    count = db.query(MarketTicker).count()
+    if count > 0:
+      return
+
+    # Popular US stocks
+    us_tickers = [
+      ("AAPL", "Apple Inc.", "US"),
+      ("MSFT", "Microsoft Corporation", "US"),
+      ("NVDA", "NVIDIA Corporation", "US"),
+      ("GOOGL", "Alphabet Inc.", "US"),
+      ("AMZN", "Amazon.com Inc.", "US"),
+      ("TSLA", "Tesla Inc.", "US"),
+      ("META", "Meta Platforms Inc.", "US"),
+      ("JPM", "JPMorgan Chase & Co.", "US"),
+      ("V", "Visa Inc.", "US"),
+      ("JNJ", "Johnson & Johnson", "US"),
+      ("WMT", "Walmart Inc.", "US"),
+      ("PG", "Procter & Gamble Company", "US"),
+      ("KO", "The Coca-Cola Company", "US"),
+      ("MCD", "McDonald's Corporation", "US"),
+      ("BA", "The Boeing Company", "US"),
+    ]
+
+    # Popular NGX stocks
+    ngx_tickers = [
+      ("ZENITHB.NG", "Zenith Bank PLC", "NGX"),
+      ("GTCO.NG", "Guaranty Trust Company", "NGX"),
+      ("FLOURISH.NG", "Flourish Nigeria Limited", "NGX"),
+      ("MTNN.NG", "Airtel Africa PLC", "NGX"),
+      ("BUA.NG", "BUA Group Limited", "NGX"),
+    ]
+
+    for symbol, name, market in us_tickers + ngx_tickers:
+      ticker = MarketTicker(symbol=symbol, name=name, market=market, is_active=True)
+      db.add(ticker)
+
+    db.commit()
+    log.info("Seeded market_tickers table with 20 popular stocks")
+  except Exception as e:
+    log.error("Failed to seed market_tickers", error=str(e))
+    db.rollback()
+  finally:
+    db.close()
+
+def run_daily_scan():
+  """Run the daily market scan to generate signals."""
+  try:
+    log.info("Starting daily market scan (US only)")
+    from scanner.us_scanner import USScanner
+    from scanner.daily_analyst import DailyAnalyst
+    from db.session import SessionLocal
+
+    db = SessionLocal()
+    scanner = USScanner()
+    candidates = scanner.scan()
+
+    if candidates:
+      analyst = DailyAnalyst()
+      analyst.analyze_all(candidates, db)
+      log.info(f"Daily scan complete: {len(candidates)} US candidates analyzed")
+    else:
+      log.warning("Daily scan: No candidates found")
+
+    db.close()
+  except Exception as e:
+    log.error("Daily scan failed", error=str(e))
+
 app = FastAPI(title="StockSense AI API", version="0.2.0")
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+@app.on_event("startup")
+async def startup_event():
+  """Seed initial data and start background scheduler on app startup."""
+  seed_market_tickers()
+
+  # Initialize and start the background scheduler for daily scans
+  scheduler = BackgroundScheduler()
+  # Run daily scan at 6am UTC
+  scheduler.add_job(run_daily_scan, 'cron', hour=6, minute=0)
+  scheduler.start()
+  log.info("Background scheduler started. Daily scan scheduled for 6:00 AM UTC")
+
+  # Also run scan immediately on startup to populate signals
+  run_daily_scan()
 
 # Middleware
 app.add_middleware(

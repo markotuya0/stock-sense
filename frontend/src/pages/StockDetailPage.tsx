@@ -11,9 +11,12 @@ export const StockDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [fetchingRealtime, setFetchingRealtime] = useState(false);
   const [stockData, setStockData] = useState<any>(null);
+  const [pollError, setPollError] = useState<string | null>(null);
 
   useEffect(() => {
     let pollTimer: number | undefined;
+    let pollRetries = 0;
+    const MAX_RETRIES = 20; // 50 seconds (20 * 2.5s)
 
     const hydrateStock = (data: any) => {
       setStockData({
@@ -35,20 +38,37 @@ export const StockDetailPage: React.FC = () => {
     };
 
     const pollUntilVerified = async () => {
-      const statusRes = await apiClient.get(`/signals/symbol/${symbol}/status`);
-      if (statusRes.data?.status === 'verified') {
-        const finalRes = await apiClient.get(`/signals/symbol/${symbol}`);
-        hydrateStock(finalRes.data);
+      pollRetries++;
+      if (pollRetries > MAX_RETRIES) {
+        setPollError(`Analysis timed out after ${(MAX_RETRIES * 2.5 / 1000).toFixed(1)}s. Backend job may be stuck.`);
         setFetchingRealtime(false);
         setLoading(false);
         return;
       }
-      if (statusRes.data?.status === 'failed') {
+
+      try {
+        const statusRes = await apiClient.get(`/signals/symbol/${symbol}/status`);
+        if (statusRes.data?.status === 'verified') {
+          const finalRes = await apiClient.get(`/signals/symbol/${symbol}`);
+          hydrateStock(finalRes.data);
+          setFetchingRealtime(false);
+          setLoading(false);
+          setPollError(null);
+          return;
+        }
+        if (statusRes.data?.status === 'failed') {
+          setPollError("Backend analysis failed. Please try another symbol.");
+          setFetchingRealtime(false);
+          setLoading(false);
+          return;
+        }
+        pollTimer = window.setTimeout(pollUntilVerified, 2500);
+      } catch (err) {
+        console.error("Poll error:", err);
+        setPollError("Network error during polling. Please try again.");
         setFetchingRealtime(false);
         setLoading(false);
-        return;
       }
-      pollTimer = window.setTimeout(pollUntilVerified, 2500);
     };
 
     const fetchStockDetail = async () => {
@@ -79,12 +99,25 @@ export const StockDetailPage: React.FC = () => {
   }, [symbol, navigate]);
 
   if (loading) return <div className="p-8"><Skeleton className="h-96 w-full" /></div>;
+  if (pollError) {
+    return (
+      <div className="min-h-screen bg-black text-white p-8 flex items-center justify-center">
+        <div className="text-center space-y-4 max-w-md">
+          <div className="text-xl font-bold text-rose-500">Analysis Error</div>
+          <div className="text-zinc-400 text-sm">{pollError}</div>
+          <button onClick={() => navigate('/dashboard')} className="px-4 py-2 bg-emerald-500 rounded text-black font-bold hover:bg-emerald-600">
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
   if (fetchingRealtime) {
     return (
       <div className="min-h-screen bg-black text-white p-8 flex items-center justify-center">
         <div className="text-center space-y-3">
           <div className="text-xl font-bold">Fetching verified real-time analysis...</div>
-          <div className="text-zinc-500 text-sm">We are validating live market data for {symbol}.</div>
+          <div className="text-zinc-500 text-sm">We are validating live market data for {symbol}. (Polling...)</div>
         </div>
       </div>
     );

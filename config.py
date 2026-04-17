@@ -68,4 +68,15 @@ class Settings(BaseSettings):
     def is_production(self) -> bool:
         return self.ENVIRONMENT == "production"
 
+    @property
+    def REDIS_URL(self) -> str:
+        """Construct Redis URL for rate limiting. Use Upstash in production, memory in dev."""
+        if self.is_production:
+            # Format: https://default:<token>@<host>:<port>
+            # Upstash REST endpoint is like: https://xxxxx.upstash.io
+            # For slowapi, we can use the token-based URL
+            base = self.UPSTASH_REDIS_REST_URL.replace("https://", "").rstrip("/")
+            return f"redis://default:{self.UPSTASH_REDIS_REST_TOKEN}@{base}:6379"
+        return "memory://"
+
 settings = Settings()
