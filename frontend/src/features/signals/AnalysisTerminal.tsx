@@ -5,7 +5,7 @@ import { useAuthStore } from '../../store/auth/useAuthStore';
 
 export const AnalysisTerminal: React.FC<{ ticker: string }> = ({ ticker }) => {
   const [logs, setLogs] = useState<string[]>([]);
-  const tier = useAuthStore((s) => s.user?.tier);
+  const tier = useAuthStore((s) => s.tier);
   const steps = [
     "Initializing Researcher agent...",
     "Querying SEC EDGAR filings for AAPL...",
