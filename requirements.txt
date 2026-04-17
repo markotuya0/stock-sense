@@ -24,6 +24,7 @@ google-generativeai
 # Data & Market
 yfinance
 beautifulsoup4
+lxml
 requests
 pandas
 ta  # Technical analysis library for RSI, etc.

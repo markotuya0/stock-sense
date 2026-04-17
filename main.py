@@ -73,13 +73,14 @@ def seed_market_tickers():
   finally:
     db.close()
 
-def run_daily_scan():
+async def run_daily_scan():
   """Run the daily market scan to generate signals."""
   try:
     log.info("Starting daily market scan (US only)")
     from scanner.us_scanner import USScanner
     from scanner.daily_analyst import DailyAnalyst
     from db.session import SessionLocal
+    import asyncio
 
     db = SessionLocal()
     scanner = USScanner()
@@ -87,7 +88,7 @@ def run_daily_scan():
 
     if candidates:
       analyst = DailyAnalyst()
-      analyst.analyze_all(candidates, db)
+      await analyst.analyze_all(candidates)
       log.info(f"Daily scan complete: {len(candidates)} US candidates analyzed")
     else:
       log.warning("Daily scan: No candidates found")
@@ -103,19 +104,21 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 @app.on_event("startup")
 async def startup_event():
   """Seed initial data and start background scheduler on app startup."""
+  import asyncio
+
   seed_market_tickers()
 
   # Initialize and start the background scheduler for daily scans
   scheduler = BackgroundScheduler()
-  # Run daily scan at 6am UTC
-  scheduler.add_job(run_daily_scan, 'cron', hour=6, minute=0)
+  # Run daily scan at 6am UTC (wrap async function for scheduler)
+  scheduler.add_job(lambda: asyncio.run(run_daily_scan()), 'cron', hour=6, minute=0)
   # Populate accuracy records daily at 9pm UTC (6 hours after scan completes)
   scheduler.add_job(populate_accuracy_records, 'cron', hour=21, minute=0)
   scheduler.start()
   log.info("Background scheduler started. Daily scan scheduled for 6:00 AM UTC, accuracy population at 9:00 PM UTC")
 
   # Also run scan immediately on startup to populate signals
-  run_daily_scan()
+  await run_daily_scan()
   # Run accuracy population on startup as well
   await populate_accuracy_records()
 
