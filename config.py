@@ -40,6 +40,7 @@ class Settings(BaseSettings):
     # Telegram
     TELEGRAM_BOT_TOKEN: str = Field(..., env="TELEGRAM_BOT_TOKEN")
     TELEGRAM_PERSONAL_CHAT_ID: str = Field(..., env="TELEGRAM_PERSONAL_CHAT_ID")
+    TELEGRAM_SECRET_TOKEN: Optional[str] = Field(default=None, env="TELEGRAM_SECRET_TOKEN")
 
     # Budget Guards (USD)
     BUDGET_PER_USER_DAILY_USD: float = 0.05

@@ -5,6 +5,7 @@ import { useAuthStore } from '../../store/auth/useAuthStore';
 import { Shield, ArrowRight, Zap, Loader2, Eye, EyeOff } from 'lucide-react';
 
 export const SignupPage: React.FC = () => {
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -14,7 +15,7 @@ export const SignupPage: React.FC = () => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await signup(email, password, 'New Analyst');
+      await signup(email, password, fullName || 'New Analyst');
       navigate('/login');
     } catch (err) {
       console.error("Signup failed", err);
@@ -42,6 +43,18 @@ export const SignupPage: React.FC = () => {
             </div>
           )}
           <form onSubmit={handleSignup} className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold ml-1">Full Name</label>
+              <input
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="w-full bg-slate-950 border border-white/10 rounded-sm py-3 px-4 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors font-mono"
+                placeholder="John Doe"
+                required
+              />
+            </div>
+
             <div className="space-y-2">
               <label className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold ml-1">Desired Terminal ID (Email)</label>
               <input
