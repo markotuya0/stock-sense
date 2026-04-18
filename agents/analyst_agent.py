@@ -36,6 +36,7 @@ async def analyst_agent(state: AgentState) -> Dict:
 
         return {
             "analyst_output": res,
+            "analyst_signal": res.get("signal", "HOLD"),
             "logs": logs + [f"> [ANALYST] Generated conviction score: {res.get('score', 'N/A')}"],
             "steps_completed": state.get("steps_completed", []) + ["analyst"]
         }

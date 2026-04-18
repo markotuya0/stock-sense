@@ -23,8 +23,9 @@ class AgentState(TypedDict):
     technical_score: Optional[float]
     risk_score: Optional[float]
     alpha_conviction: Optional[float]
-    
+
     # Agent Outputs
+    analyst_signal: Optional[str]  # BUY/HOLD/SELL signal from analyst
     analyst_output: Optional[dict]
     critic_output: Optional[dict]
     report_data: Optional[dict]

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Terminal, Cpu, Search, Database, CheckCircle } from 'lucide-react';
 import { useAuthStore } from '../../store/auth/useAuthStore';
+import { supabase } from '../../lib/supabase';
 
 export const AnalysisTerminal: React.FC<{ ticker: string }> = ({ ticker }) => {
   const [logs, setLogs] = useState<string[]>([]);
@@ -23,33 +24,64 @@ export const AnalysisTerminal: React.FC<{ ticker: string }> = ({ ticker }) => {
       setLogs(["Upgrade to Pro to view live Layer 2 analysis."]);
       return;
     }
-    const base = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-    const token = localStorage.getItem('access_token');
-    const url = `${base}/api/v1/analysis/stream/${ticker}?token=${encodeURIComponent(token || '')}`;
-    const eventSource = new EventSource(url);
 
-    eventSource.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      setLogs(prev => [...prev, data.log]);
-      if (data.completed) {
-        eventSource.close();
+    let eventSource: EventSource | null = null;
+
+    const startStream = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token || '';
+        if (!token) {
+          setLogs(["Authentication error: No valid session. Please log in again."]);
+          return;
+        }
+
+        const base = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        const url = `${base}/api/v1/analysis/stream/${ticker}?token=${encodeURIComponent(token)}`;
+
+        eventSource = new EventSource(url);
+
+        eventSource.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            setLogs(prev => [...prev, data.log]);
+            if (data.completed) {
+              eventSource?.close();
+            }
+          } catch (e) {
+            console.error("Failed to parse SSE message:", e);
+          }
+        };
+
+        eventSource.addEventListener('done', (event: any) => {
+          try {
+            const data = JSON.parse(event.data);
+            setLogs(prev => [...prev, `REPORT GENERATED: ${data.final_signal}`]);
+            eventSource?.close();
+          } catch (e) {
+            console.error("Failed to parse done event:", e);
+          }
+        });
+
+        eventSource.onerror = (err) => {
+          console.error("EventSource failed:", err);
+          setLogs((prev) => (prev.length ? prev : ["Live analysis unavailable right now. Check your connection and try again."]));
+          eventSource?.close();
+        };
+      } catch (err) {
+        console.error("Failed to start stream:", err);
+        setLogs(["Error starting analysis stream. Please try again."]);
       }
     };
 
-    eventSource.addEventListener('done', (event: any) => {
-      const data = JSON.parse(event.data);
-      setLogs(prev => [...prev, `REPORT GENERATED: ${data.final_signal}`]);
-      eventSource.close();
-    });
+    startStream();
 
-    eventSource.onerror = (err) => {
-      console.error("EventSource failed:", err);
-      setLogs((prev) => (prev.length ? prev : ["Live analysis unavailable right now."]));
-      eventSource.close();
+    return () => {
+      if (eventSource) {
+        eventSource.close();
+      }
     };
-
-    return () => eventSource.close();
-  }, [ticker]);
+  }, [ticker, tier]);
 
   return (
     <div className="bg-[#050510] border border-white/10 rounded-xl overflow-hidden shadow-2xl">

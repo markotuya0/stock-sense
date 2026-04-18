@@ -9,11 +9,12 @@ import time
 from config import settings
 from routers import search, signals, analysis, payment, accuracy, portfolio, users, webhooks
 from db.session import engine, Base, SessionLocal
-from db.models import MarketTicker
+from db.models import MarketTicker, Signal
 from middleware.security_headers import SecurityHeadersMiddleware
 from middleware.rate_limit import limiter
 from services.accuracy_service import populate_accuracy_records
 from apscheduler.schedulers.background import BackgroundScheduler
+from datetime import datetime, timezone
 
 # Setup logger
 log = structlog.get_logger()
@@ -73,6 +74,42 @@ def seed_market_tickers():
   finally:
     db.close()
 
+async def persist_daily_signals(signals: list, db: SessionLocal):
+  """Persist Layer1 signals from daily analyst to signals table."""
+  try:
+    count = 0
+    for sig in signals:
+      market = "NGX" if sig.symbol.endswith((".NG", ".LG")) else "US"
+      db_signal = Signal(
+          symbol=sig.symbol,
+          name=sig.symbol,
+          signal_type=sig.signal,
+          score=sig.score,
+          price_at_signal=0.0,
+          price_target=sig.price_target,
+          risk_score=sig.risk_score,
+          analysis={
+              "reason": sig.reason,
+              "beginner_note": sig.beginner_note,
+              "learn_term": sig.learn_term,
+              "learn_explanation": sig.learn_explanation,
+          },
+          market=market,
+          is_layer2=False,
+          deep_research={
+              "status": "scanner",
+              "source": "daily-analyst",
+              "generated_at": datetime.now(timezone.utc).isoformat(),
+          },
+      )
+      db.add(db_signal)
+      count += 1
+    db.commit()
+    log.info("Persisted daily signals to DB", count=count)
+  except Exception as e:
+    log.error("Failed to persist daily signals", error=str(e))
+    db.rollback()
+
 async def run_daily_scan():
   """Run the daily market scan to generate signals."""
   try:
@@ -88,8 +125,9 @@ async def run_daily_scan():
 
     if candidates:
       analyst = DailyAnalyst()
-      await analyst.analyze_all(candidates)
-      log.info(f"Daily scan complete: {len(candidates)} US candidates analyzed")
+      signals = await analyst.analyze_all(candidates)
+      await persist_daily_signals(signals, db)
+      log.info(f"Daily scan complete: {len(candidates)} US candidates analyzed, {len(signals)} signals created")
     else:
       log.warning("Daily scan: No candidates found")
 
