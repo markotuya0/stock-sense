@@ -25,7 +25,7 @@ async def researcher_agent(state: AgentState) -> Dict:
         market = state.get("market", "US")
         cache_key_6mo = CacheService.get_key("layer1_signal", market=market, symbol=ticker)
 
-        async def fetch_all_data():
+        def fetch_all_data():
             t = yf.Ticker(ticker)
             return {
                 "info": t.info,
