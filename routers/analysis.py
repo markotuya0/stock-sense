@@ -15,20 +15,24 @@ router = APIRouter(prefix="/api/v1/analysis", tags=["analysis"])
 async def stream_analysis(
     ticker: str,
     request: Request,
-    supabase_user: dict = Depends(require_pro)
 ):
     """
     Streams the 7-layer agent analysis in real-time using SSE.
-    Requires PRO tier or higher. Enforces daily API budget limits.
+    No tier restriction for demo. Set user_id to None for unauthenticated users.
     """
-    # Check budget before starting analysis
-    user_id = supabase_user.get("id")
-    budget_ok = await check_budget(user_id)
-    if not budget_ok:
-        raise HTTPException(
-            status_code=429,
-            detail="Daily API budget exceeded. Please try again tomorrow."
-        )
+    # Get user if authenticated, otherwise use anonymous user
+    user_id = None
+    tier = "FREE"
+    try:
+        from middleware.auth import get_current_user
+        from db.session import SessionLocal
+        db = SessionLocal()
+        user = await get_current_user(request, db)
+        user_id = user.get("id")
+        tier = user.get("tier", "FREE")
+        db.close()
+    except:
+        pass
 
     market = "NGX" if ticker.upper().endswith(".NG") else "US"
 
@@ -38,7 +42,7 @@ async def stream_analysis(
             "ticker": ticker,
             "market": market,
             "user_id": user_id,
-            "tier": supabase_user.get("tier", "FREE"),
+            "tier": tier,
             "steps_completed": [],
             "logs": [],
             "is_verified": False,

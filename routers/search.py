@@ -16,28 +16,13 @@ import yfinance as yf
 def search_stock(
     q: str,
     db: Session = Depends(get_db),
-    supabase_user: dict = Depends(get_current_user)
 ):
     """Universal stock search. Queries DB for known tickers and falls back to yfinance."""
     normalized_q = q.strip()
     if not normalized_q:
         return []
 
-    log.info("Stock search", query=normalized_q, user_id=supabase_user.get("id"))
-
-    # Log search history without FK constraint (Supabase IDs don't exist in our users table)
-    from uuid import UUID
-    try:
-        search_rec = SearchHistory(
-            user_id=UUID(supabase_user["id"]),
-            query=normalized_q
-        )
-        db.add(search_rec)
-        db.commit()
-    except Exception as e:
-        # FK constraint may fail for Supabase user IDs not in our users table
-        # Fall back to search without history persistence
-        log.warning("Search history skipped", error=str(e))
+    log.info("Stock search", query=normalized_q)
 
     # DB Search (Fast)
     db_results = db.query(MarketTicker).filter(
