@@ -24,7 +24,7 @@ export const AnalysisTerminal: React.FC<{ ticker: string }> = ({ ticker }) => {
 
     const startStream = async () => {
       try {
-        const base = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
         const url = `${base}/api/v1/analysis/stream/${ticker}`;
 
         eventSource = new EventSource(url);
