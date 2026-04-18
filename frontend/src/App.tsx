@@ -15,8 +15,8 @@ function App() {
       <div className="bg-background text-foreground selection:bg-accent/30 selection:text-accent">
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/dashboard" element={<AuthGuard><DashboardPage /></AuthGuard>} />
-          <Route path="/stock/:symbol" element={<AuthGuard><StockDetailPage /></AuthGuard>} />
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/stock/:symbol" element={<StockDetailPage />} />
           <Route path="/accuracy" element={<AccuracyPage />} />
           <Route path="/settings" element={<AuthGuard><SettingsPage /></AuthGuard>} />
           <Route path="/portfolio" element={<AuthGuard><PortfolioPage /></AuthGuard>} />
