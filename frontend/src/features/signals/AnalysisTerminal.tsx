@@ -19,25 +19,13 @@ export const AnalysisTerminal: React.FC<{ ticker: string }> = ({ ticker }) => {
 
   useEffect(() => {
     if (!ticker) return;
-    const tierLevel = tier === 'ENTERPRISE' ? 2 : tier === 'PRO' ? 1 : 0;
-    if (tierLevel < 1) {
-      setLogs(["Upgrade to Pro to view live Layer 2 analysis."]);
-      return;
-    }
 
     let eventSource: EventSource | null = null;
 
     const startStream = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const token = session?.access_token || '';
-        if (!token) {
-          setLogs(["Authentication error: No valid session. Please log in again."]);
-          return;
-        }
-
         const base = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-        const url = `${base}/api/v1/analysis/stream/${ticker}?token=${encodeURIComponent(token)}`;
+        const url = `${base}/api/v1/analysis/stream/${ticker}`;
 
         eventSource = new EventSource(url);
 
