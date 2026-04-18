@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from db.session import get_db
@@ -175,26 +175,46 @@ def _enqueue_signal_fetch(symbol: str, market: str, db: Session) -> None:
     Thread(target=_generate_realtime_signal, args=(normalized, market), daemon=True).start()
 
 
+async def _get_optional_user(request: Request, db: Session = Depends(get_db)) -> dict:
+    """Get user if authenticated, otherwise return anonymous user."""
+    try:
+        return await get_current_user(request)
+    except HTTPException:
+        return {"tier": "FREE", "id": None, "email": None}
+
+
 @router.get("/")
 def get_signals(
+    request: Request,
     market: Optional[str] = Query(None, regex="^(US|NGX)$"),
-    db: Session = Depends(get_db),
-    supabase_user: dict = Depends(get_current_user)
+    db: Session = Depends(get_db)
 ):
-    """Fetch latest stock signals. Tier-limited results logic applies here."""
+    """Fetch latest stock signals. Public endpoint with optional auth."""
     query = db.query(Signal)
     if market:
         query = query.filter(Signal.market == market)
 
     signals = query.order_by(Signal.created_at.desc()).limit(20).all()
 
-    # Tier logic: FREE users only see limited data
-    if supabase_user.get("tier") == "FREE":
-        for s in signals:
-            # Mask sensitive data for free users if needed
-            # s.analysis = {"reason": "Upgrade to Pro to see analysis"}
-            pass
+    payload = []
+    for signal in signals:
+        row = {c.name: getattr(signal, c.name) for c in Signal.__table__.columns}
+        row.update(_build_verification_payload(signal, db))
+        payload.append(row)
+    return payload
 
+
+@router.get("/demo/public")
+def get_signals_demo(
+    market: Optional[str] = Query(None, regex="^(US|NGX)$"),
+    db: Session = Depends(get_db)
+):
+    """Public demo endpoint - no auth required for testing."""
+    query = db.query(Signal)
+    if market:
+        query = query.filter(Signal.market == market)
+
+    signals = query.order_by(Signal.created_at.desc()).limit(20).all()
     payload = []
     for signal in signals:
         row = {c.name: getattr(signal, c.name) for c in Signal.__table__.columns}
@@ -221,8 +241,7 @@ def get_signal_detail(
 @router.get("/symbol/{symbol}")
 def get_signal_by_symbol(
     symbol: str,
-    db: Session = Depends(get_db),
-    supabase_user: dict = Depends(get_current_user)
+    db: Session = Depends(get_db)
 ):
     """Fetch latest verified signal, or trigger real-time fetch if missing."""
     normalized = symbol.upper()
@@ -267,8 +286,7 @@ def get_signal_by_symbol(
 @router.get("/symbol/{symbol}/status")
 def get_signal_status(
     symbol: str,
-    db: Session = Depends(get_db),
-    supabase_user: dict = Depends(get_current_user)
+    db: Session = Depends(get_db)
 ):
     normalized = symbol.upper()
     signal = db.query(Signal).filter(Signal.symbol == normalized).order_by(Signal.created_at.desc()).first()
