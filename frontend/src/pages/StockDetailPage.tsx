@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Share2, TrendingUp, Shield, Globe, Cpu, Search } from 'lucide-react';
 import { Skeleton } from '../components/ui/Skeleton';
+import { AnalysisTerminal } from '../features/signals/AnalysisTerminal';
 
 import apiClient from '../api/client';
 
@@ -223,24 +224,7 @@ export const StockDetailPage: React.FC = () => {
              </div>
           </div>
 
-          <div className="bg-zinc-950 border border-zinc-900 rounded-2xl overflow-hidden h-full">
-            <div className="p-4 border-b border-zinc-900 flex items-center justify-between">
-              <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Live Agent Stream</span>
-              <div className="flex gap-1">
-                <div className="w-1 h-1 rounded-full bg-blue-500 animate-pulse" />
-                <div className="w-1 h-1 rounded-full bg-blue-500 animate-pulse delay-75" />
-                <div className="w-1 h-1 rounded-full bg-blue-500 animate-pulse delay-150" />
-              </div>
-            </div>
-            <div className="p-4 bg-black font-mono text-[10px] text-zinc-500 h-64 overflow-y-auto">
-               {stockData.ai_thoughts.map((thought: any, i: number) => (
-                 <div key={i} className="mb-2">
-                   <span className="text-blue-500">[{thought.agent}]</span> {thought.text}
-                 </div>
-               ))}
-               <div className="text-white animate-pulse">_</div>
-            </div>
-          </div>
+          <AnalysisTerminal ticker={symbol || 'NVDA'} />
         </div>
       </div>
     </div>
