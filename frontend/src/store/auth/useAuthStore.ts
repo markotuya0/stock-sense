@@ -23,6 +23,8 @@ const getTierFromUser = (user: User | null): 'FREE' | 'PRO' | 'ENTERPRISE' => {
   return 'FREE';
 };
 
+let authUnsubscribe: (() => void) | null = null;
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
@@ -38,10 +40,12 @@ export const useAuthStore = create<AuthState>()(
           const user = session?.user ?? null;
           set({ user, tier: getTierFromUser(user), isInitialized: true });
 
-          supabase.auth.onAuthStateChange((_event, session) => {
+          if (authUnsubscribe) authUnsubscribe();
+          const { data } = supabase.auth.onAuthStateChange((_event, session) => {
             const user = session?.user ?? null;
             set({ user, tier: getTierFromUser(user) });
           });
+          authUnsubscribe = data.subscription.unsubscribe;
         } catch (error) {
           set({ isInitialized: true });
         }

@@ -23,13 +23,16 @@ export const DashboardPage: React.FC = () => {
 
     fetchSignals();
   }, []);
+
+  const today = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
   return (
     <DashboardLayout>
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-end mb-10">
           <div>
             <h1 className="text-4xl font-bold mb-2">Morning Intelligence</h1>
-            <p className="text-muted">Personalized signals for Monday, April 13, 2026</p>
+            <p className="text-muted">Personalized signals for {today}</p>
           </div>
           <div className="flex gap-2">
              <button className="px-4 py-2 bg-white/5 rounded-lg border border-white/10 text-sm hover:bg-white/10 transition-all font-medium">Export CSV</button>

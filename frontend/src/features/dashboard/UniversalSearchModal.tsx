@@ -2,18 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Search, X, TrendingUp, Globe } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../../api/client';
+import { getBadgeClass } from '../../lib/badge';
 
 export const UniversalSearchModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const badgeClass = (state?: string) => {
-    if (state === 'verified') return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-    if (state === 'stale') return 'bg-amber-500/10 text-amber-300 border-amber-500/20';
-    if (state === 'fetching') return 'bg-blue-500/10 text-blue-300 border-blue-500/20';
-    return 'bg-zinc-600/10 text-zinc-300 border-zinc-500/20';
-  };
 
   useEffect(() => {
     const normalized = query.trim();
@@ -64,9 +59,9 @@ export const UniversalSearchModal: React.FC<{ isOpen: boolean; onClose: () => vo
           ) : results.length > 0 ? (
             <div className="p-2">
               <div className="px-4 py-2 text-[10px] uppercase font-bold text-zinc-600 tracking-widest">Matches</div>
-              {results.map((res, i) => (
-                <div 
-                  key={i} 
+              {results.map((res) => (
+                <div
+                  key={res.symbol} 
                   className="flex items-center justify-between p-4 hover:bg-zinc-900 rounded-xl cursor-pointer group transition-all"
                   onClick={() => {
                     navigate(`/stock/${res.symbol}`);
@@ -85,7 +80,7 @@ export const UniversalSearchModal: React.FC<{ isOpen: boolean; onClose: () => vo
                   <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">
                     <Globe size={12} />
                     <span>{res.market}</span>
-                    <span className={`px-2 py-1 rounded border text-[9px] ${badgeClass(res.verification_state)}`}>
+                    <span className={`px-2 py-1 rounded border text-[9px] ${getBadgeClass(res.verification_state || 'verified')}`}>
                       {res.verification_state || 'verified'}
                     </span>
                   </div>

@@ -1,12 +1,15 @@
 import React from 'react';
-import { Search, Home, Signal, TrendingUp, Settings, HelpCircle, User } from 'lucide-react';
+import { Search, Home, Signal, TrendingUp, Settings, User } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { UniversalSearchModal } from './UniversalSearchModal';
 
 export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isSearchOpen, setIsSearchOpen] = React.useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isActive = (path: string) => location.pathname === path;
 
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
@@ -17,13 +20,13 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
           <Signal className="text-accent w-6 h-6" />
         </div>
         <nav className="flex flex-col gap-6">
-          <NavItem icon={<Home w-5 h-5 />} onClick={() => navigate('/dashboard')} active />
-          <NavItem icon={<TrendingUp w-5 h-5 />} onClick={() => navigate('/accuracy')} />
-          <NavItem icon={<Search w-5 h-5 />} onClick={() => setIsSearchOpen(true)} />
-          <NavItem icon={<Settings w-5 h-5 />} onClick={() => navigate('/settings')} />
+          <NavItem icon={<Home size={20} />} onClick={() => navigate('/dashboard')} active={isActive('/dashboard')} />
+          <NavItem icon={<TrendingUp size={20} />} onClick={() => navigate('/accuracy')} active={isActive('/accuracy')} />
+          <NavItem icon={<Search size={20} />} onClick={() => setIsSearchOpen(true)} />
+          <NavItem icon={<Settings size={20} />} onClick={() => navigate('/settings')} active={isActive('/settings')} />
         </nav>
         <div className="mt-auto">
-          <NavItem icon={<User w-5 h-5 />} />
+          <NavItem icon={<User size={20} />} />
         </div>
       </aside>
 
@@ -31,7 +34,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Top Header / Search bar */}
         <header className="h-16 border-b border-white/5 flex items-center px-8 justify-between">
-           <div 
+           <div
              onClick={() => setIsSearchOpen(true)}
              className="flex items-center gap-4 bg-white/5 px-4 py-2 rounded-lg border border-white/10 w-[400px] text-muted cursor-pointer hover:bg-white/10 transition-all"
            >
@@ -39,19 +42,11 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
               <span className="text-sm">Universal Search...</span>
               <kbd className="ml-auto text-[10px] bg-white/10 px-1.5 py-0.5 rounded font-mono">⌘K</kbd>
            </div>
-           
-           <div className="flex items-center gap-4">
-              <div className="flex bg-white/5 p-1 rounded-lg border border-white/10">
-                 <button className="px-3 py-1 text-xs rounded bg-accent text-background font-bold">US</button>
-                 <button className="px-3 py-1 text-xs rounded text-muted hover:text-white">NGX</button>
-              </div>
-              <HelpCircle size={20} className="text-muted" />
-           </div>
         </header>
 
         {/* Dynamic Feed Area */}
         <div className="flex-1 overflow-y-auto p-8 mesh-gradient">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
@@ -64,7 +59,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
 };
 
 const NavItem = ({ icon, onClick, active = false }: { icon: React.ReactNode, onClick?: () => void, active?: boolean }) => (
-  <div 
+  <div
     onClick={onClick}
     className={`p-2 rounded-lg cursor-pointer transition-all ${active ? 'bg-white/10 text-white' : 'text-muted hover:text-white hover:bg-white/5'}`}
   >

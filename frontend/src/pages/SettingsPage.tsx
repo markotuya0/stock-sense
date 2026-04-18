@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Bell, Shield, Wallet, Smartphone, ExternalLink, CheckCircle } from 'lucide-react';
+import { useAuthStore } from '../store/auth/useAuthStore';
 
 export const SettingsPage: React.FC = () => {
-  const [isLinked] = useState(false);
+  const tier = useAuthStore(s => s.tier);
+  const isLinked = false;
   
   return (
     <div className="min-h-screen bg-black text-white p-4 md:p-8 animate-in slide-in-from-bottom-4 duration-500">
@@ -70,7 +72,7 @@ export const SettingsPage: React.FC = () => {
             <div className="flex items-center justify-between p-6 bg-zinc-900/30 border border-zinc-800 rounded-2xl">
                <div>
                   <div className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mb-1">Current Tier</div>
-                  <div className="text-2xl font-black italic tracking-tighter">FREE ACCESS</div>
+                  <div className="text-2xl font-black italic tracking-tighter">{tier.toUpperCase()} ACCESS</div>
                </div>
                <button className="px-6 py-3 bg-white text-black font-bold rounded-xl hover:bg-zinc-200 transition-all">
                  Upgrade Plan

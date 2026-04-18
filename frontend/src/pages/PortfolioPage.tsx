@@ -24,6 +24,19 @@ export const PortfolioPage: React.FC = () => {
 
   if (loading) return <div className="p-8"><Skeleton className="h-96 w-full" /></div>;
 
+  if (!portfolio) {
+    return (
+      <div className="p-8 text-center text-zinc-400">
+        <p>Unable to load portfolio data. Please try again later.</p>
+      </div>
+    );
+  }
+
+  const nextRebalanceTime = new Date();
+  nextRebalanceTime.setDate(nextRebalanceTime.getDate() + (1 - nextRebalanceTime.getDay() + 7) % 7 || 7);
+  nextRebalanceTime.setHours(9, 30, 0, 0);
+  const rebalanceDisplay = nextRebalanceTime.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase() + ' · 09:30 AM';
+
   return (
     <div className="min-h-screen bg-black text-white p-4 md:p-8 animate-in zoom-in-95 duration-500">
       <div className="max-w-7xl mx-auto">
@@ -37,9 +50,9 @@ export const PortfolioPage: React.FC = () => {
           </div>
           <div className="text-right">
              <div className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-1">Total Equity (USD)</div>
-             <div className="text-5xl font-black tracking-tighter">${portfolio.total_value.toLocaleString()}</div>
-             <div className="text-green-500 font-bold flex items-center justify-end gap-1 text-sm mt-1">
-               <TrendingUp size={14} /> +{portfolio.pnl_percent}% Total Gain
+             <div className="text-5xl font-black tracking-tighter">${(portfolio.total_value || 0).toLocaleString()}</div>
+             <div className={`font-bold flex items-center justify-end gap-1 text-sm mt-1 ${(portfolio.pnl_percent || 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+               <TrendingUp size={14} /> {(portfolio.pnl_percent || 0) >= 0 ? '+' : ''}{portfolio.pnl_percent || 0}% Total Gain
              </div>
           </div>
         </div>
@@ -50,7 +63,7 @@ export const PortfolioPage: React.FC = () => {
             <div className="bg-zinc-950 border border-zinc-900 rounded-3xl overflow-hidden">
                <div className="p-6 border-b border-zinc-900 bg-zinc-900/20">
                  <h3 className="font-bold flex items-center gap-2">
-                   Active Holdings <span className="bg-zinc-800 text-[10px] px-2 py-0.5 rounded-full text-zinc-400">{portfolio.holdings.length}</span>
+                   Active Holdings <span className="bg-zinc-800 text-[10px] px-2 py-0.5 rounded-full text-zinc-400">{portfolio.holdings?.length || 0}</span>
                  </h3>
                </div>
                <div className="overflow-x-auto">
@@ -65,7 +78,7 @@ export const PortfolioPage: React.FC = () => {
                      </tr>
                    </thead>
                    <tbody className="divide-y divide-zinc-900">
-                     {portfolio.holdings.map((stock: any, i: number) => (
+                     {(portfolio.holdings || []).map((stock: any, i: number) => (
                        <tr key={i} className="group hover:bg-zinc-900/30 transition-colors">
                          <td className="px-6 py-6">
                             <div className="font-black italic text-lg tracking-tighter">{stock.symbol}</div>
@@ -75,8 +88,12 @@ export const PortfolioPage: React.FC = () => {
                          <td className="px-6 py-6 font-mono text-sm">${stock.avg_price}</td>
                          <td className="px-6 py-6 font-mono text-sm">${stock.current_price}</td>
                          <td className="px-6 py-6 text-right">
-                            <div className="text-green-500 font-bold">+${stock.pnl.toLocaleString()}</div>
-                            <div className="text-[10px] text-green-600">+{stock.pnl_pct}%</div>
+                            <div className={stock.pnl >= 0 ? 'text-green-500 font-bold' : 'text-red-500 font-bold'}>
+                              {stock.pnl >= 0 ? '+' : ''}${stock.pnl.toLocaleString()}
+                            </div>
+                            <div className={stock.pnl_pct >= 0 ? 'text-[10px] text-green-600' : 'text-[10px] text-red-600'}>
+                              {stock.pnl_pct >= 0 ? '+' : ''}{stock.pnl_pct}%
+                            </div>
                          </td>
                        </tr>
                      ))}
@@ -88,39 +105,18 @@ export const PortfolioPage: React.FC = () => {
 
           {/* Side Panels */}
           <div className="space-y-6">
-             <div className="bg-zinc-950 border border-zinc-900 p-6 rounded-3xl">
-                <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-4">Risk Exposure</h4>
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between text-xs mb-1">
-                       <span>Tech (High Growth)</span>
-                       <span className="text-zinc-400">72%</span>
-                    </div>
-                    <div className="w-full bg-zinc-900 h-1.5 rounded-full overflow-hidden">
-                       <div className="bg-blue-500 h-full w-[72%]" />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-xs mb-1">
-                       <span>Banking (Defensive)</span>
-                       <span className="text-zinc-400">28%</span>
-                    </div>
-                    <div className="w-full bg-zinc-900 h-1.5 rounded-full overflow-hidden">
-                       <div className="bg-green-500 h-full w-[28%]" />
-                    </div>
-                  </div>
-                </div>
-             </div>
-
              <div className="bg-white text-black p-6 rounded-3xl">
                 <div className="flex items-center gap-2 mb-4">
                   <Clock size={16} />
                   <span className="text-[10px] font-bold uppercase tracking-widest">Next Rebalance</span>
                 </div>
-                <div className="text-2xl font-black italic tracking-tighter mb-4">MONDAY · 09:30 AM</div>
+                <div className="text-xl font-black italic tracking-tighter mb-4">{rebalanceDisplay}</div>
                 <button className="w-full py-3 bg-black text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors">
                   Run Optimization <ArrowRight size={14} />
                 </button>
+             </div>
+             <div className="bg-zinc-950 border border-zinc-900 p-6 rounded-3xl text-zinc-400 text-xs">
+                <p>Risk analysis coming soon. Historical sector rotation data will appear here.</p>
              </div>
           </div>
         </div>

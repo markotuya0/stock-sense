@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Target, TrendingUp, Award, Clock, ArrowRight } from 'lucide-react';
 import { Skeleton } from '../components/ui/Skeleton';
+import { getBadgeClass } from '../lib/badge';
 
 import apiClient from '../api/client';
 
@@ -102,11 +103,7 @@ export const AccuracyPage: React.FC = () => {
                       {(row.avg_return ?? 0) >= 0 ? '+' : ''}{row.avg_return ?? 0}%
                     </td>
                     <td className="px-8 py-6">
-                      <span className={`px-3 py-1 text-[10px] font-bold rounded-full uppercase tracking-tighter border ${
-                        (row.verification_state || 'verified') === 'verified'
-                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                          : 'bg-amber-500/10 text-amber-300 border-amber-500/20'
-                      }`}>
+                      <span className={`px-3 py-1 text-[10px] font-bold rounded-full uppercase tracking-tighter border ${getBadgeClass(row.verification_state || 'verified')}`}>
                         {row.verification_state || 'verified'}
                       </span>
                     </td>

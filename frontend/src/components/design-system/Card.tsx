@@ -11,8 +11,7 @@ export const Card: React.FC<CardProps> = ({ children, className, glow = false })
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
+      animate={{ opacity: 1, y: 0 }}
       className={`glass-card p-6 border border-white/10 ${glow ? 'glow-border' : ''} ${className}`}
     >
       {children}

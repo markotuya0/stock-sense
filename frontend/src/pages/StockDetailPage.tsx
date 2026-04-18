@@ -23,7 +23,7 @@ export const StockDetailPage: React.FC = () => {
       setStockData({
         symbol: data.symbol,
         name: data.name || data.symbol,
-        price: data.price_at_signal,
+        price: data.price_at_signal > 0 ? data.price_at_signal : null,
         change: data.deep_research?.move_pct ?? data.move_pct ?? data.change_pct ?? 0,
         market: data.market,
         signal: data.signal_type,
@@ -116,9 +116,15 @@ export const StockDetailPage: React.FC = () => {
   if (fetchingRealtime) {
     return (
       <div className="min-h-screen bg-black text-white p-8 flex items-center justify-center">
-        <div className="text-center space-y-3">
-          <div className="text-xl font-bold">Fetching verified real-time analysis...</div>
-          <div className="text-zinc-500 text-sm">We are validating live market data for {symbol}. (Polling...)</div>
+        <div className="text-center space-y-6 max-w-sm">
+          <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto" />
+          <div className="space-y-2">
+            <div className="text-lg font-bold">Fetching live market data for {symbol}</div>
+            <div className="text-zinc-500 text-sm">Real-time verification in progress...</div>
+          </div>
+          <div className="w-full bg-zinc-900 rounded-full h-1 overflow-hidden">
+            <div className="bg-emerald-500 h-1 rounded-full animate-pulse w-1/2" />
+          </div>
         </div>
       </div>
     );
@@ -218,7 +224,9 @@ export const StockDetailPage: React.FC = () => {
           <div className="bg-white text-black p-8 rounded-2xl">
              <div className="text-sm font-bold uppercase tracking-widest mb-2 opacity-60">AI Verdict</div>
              <div className="text-5xl font-black italic tracking-tighter mb-4">{stockData.signal}</div>
-             <div className="text-4xl font-mono tracking-tighter">${stockData.price}</div>
+             <div className="text-4xl font-mono tracking-tighter">
+               {stockData.price ? `$${stockData.price.toLocaleString()}` : 'N/A'}
+             </div>
              <div className={`${stockData.change >= 0 ? 'text-green-600' : 'text-red-500'} font-bold mt-1`}>
                {stockData.change >= 0 ? '+' : ''}{stockData.change}% 24h
              </div>

@@ -6,16 +6,6 @@ import { supabase } from '../../lib/supabase';
 
 export const AnalysisTerminal: React.FC<{ ticker: string }> = ({ ticker }) => {
   const [logs, setLogs] = useState<string[]>([]);
-  const tier = useAuthStore((s) => s.tier);
-  const steps = [
-    "Initializing Researcher agent...",
-    "Querying SEC EDGAR filings for AAPL...",
-    "Analyzing quarterly cash flows...",
-    "Macro agent checking consumer sentiment trends...",
-    "Regulatory agent scanning for antitrust updates...",
-    "Synthesizing findings... [Llama 3.1-405B]",
-    "VALIDATION COMPLETE: 9.2/10 Conviction."
-  ];
 
   useEffect(() => {
     if (!ticker) return;
@@ -69,7 +59,7 @@ export const AnalysisTerminal: React.FC<{ ticker: string }> = ({ ticker }) => {
         eventSource.close();
       }
     };
-  }, [ticker, tier]);
+  }, [ticker]);
 
   return (
     <div className="bg-[#050510] border border-white/10 rounded-xl overflow-hidden shadow-2xl">
@@ -95,10 +85,10 @@ export const AnalysisTerminal: React.FC<{ ticker: string }> = ({ ticker }) => {
               className="flex gap-3"
             >
               <span className="text-accent">❯</span>
-              <span className={i === steps.length - 1 ? "text-emerald-400 font-bold" : "text-zinc-400"}>
+              <span className={i === logs.length - 1 ? "text-emerald-400 font-bold" : "text-zinc-400"}>
                 {log}
               </span>
-              {i < steps.length - 1 && i === logs.length - 1 && (
+              {i === logs.length - 1 && (
                 <motion.span
                   animate={{ opacity: [0, 1, 0] }}
                   transition={{ repeat: Infinity, duration: 0.8 }}

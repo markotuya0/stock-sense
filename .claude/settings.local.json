@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git commit -m 'Fix auth state references in frontend guards and pricing *)",
+      "Bash(python *)",
+      "Bash(pip install *)",
+      "Bash(python3 -m pip install pydantic-settings -q)",
+      "Bash(python3 -m pip install --upgrade pip -q)",
+      "Bash(npm install *)",
+      "Bash(git commit -m 'Update .env.example with Supabase configuration *)",
+      "Bash(git commit -m 'Phase 1: Make dashboard work on fresh boot *)",
+      "Bash(chmod +x *)",
+      "Bash(python3 *)",
+      "Bash(git commit -m 'Add comprehensive testing guides and verification script *)",
+      "Bash(timeout 10 uvicorn main:app --reload --host 0.0.0.0 --port 8000)",
+      "Bash(git commit -m 'Fix S&P 500 scraper and async DailyAnalyst integration *)",
+      "Bash(git commit *)",
+      "Bash(uvicorn main:app *)",
+      "Bash(curl -s http://localhost:8000/api/v1/signals)",
+      "Bash(lsof -ti:8000)",
+      "Bash(xargs kill *)",
+      "Bash(curl -s http://localhost:8000/api/v1/signals -H \"Authorization: Bearer test\")",
+      "Bash(curl -v http://localhost:8000/api/v1/signals)",
+      "Bash(curl -s http://localhost:8000/api/v1/signals/demo/public)",
+      "Bash(curl -s \"http://localhost:8000/api/v1/signals/symbol/AAPL\")",
+      "Bash(pkill -f \"uvicorn main:app\")",
+      "Bash(curl -s \"http://localhost:8000/api/v1/search/?q=AAPL\")",
+      "Bash(curl -s \"http://localhost:8000/api/v1/analysis/stream/AAPL\" -H \"Accept: text/event-stream\")",
+      "Bash(curl -N \"http://localhost:8000/api/v1/analysis/stream/AAPL\" -H \"Accept: text/event-stream\" -H \"Authorization: Bearer test\")",
+      "Bash(curl -s \"http://localhost:8000/api/v1/signals/\")",
+      "Bash(curl -s \"http://localhost:8000/api/v1/search/?q=TSLA\")",
+      "Bash(curl -s \"http://localhost:8000/api/v1/analysis/stream/NVDA\" -H \"Accept: text/event-stream\")",
+      "Bash(curl -N \"http://localhost:8000/api/v1/analysis/stream/AAPL\")",
+      "Bash(curl -s \"http://localhost:8000/api/v1/analysis/stream/AAPL\")",
+      "Bash(curl -v \"http://localhost:8000/api/v1/analysis/stream/AAPL\")",
+      "Bash(cat)",
+      "Read(//tmp/**)",
+      "Bash(grep -v \"# Auth router removed\" echo \"---\")"
+    ]
+  }
+}

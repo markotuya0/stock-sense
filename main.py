@@ -77,15 +77,25 @@ def seed_market_tickers():
 async def persist_daily_signals(signals: list, db: SessionLocal):
   """Persist Layer1 signals from daily analyst to signals table."""
   try:
+    import yfinance as yf
     count = 0
     for sig in signals:
       market = "NGX" if sig.symbol.endswith((".NG", ".LG")) else "US"
+
+      current_price = 0.0
+      try:
+        ticker = yf.Ticker(sig.symbol)
+        fast_info = getattr(ticker, "fast_info", {}) or {}
+        current_price = float(fast_info.get("lastPrice") or 0.0)
+      except Exception as price_err:
+        log.debug("Failed to fetch price for signal", symbol=sig.symbol, error=str(price_err))
+
       db_signal = Signal(
           symbol=sig.symbol,
           name=sig.symbol,
           signal_type=sig.signal,
           score=sig.score,
-          price_at_signal=0.0,
+          price_at_signal=current_price,
           price_target=sig.price_target,
           risk_score=sig.risk_score,
           analysis={
