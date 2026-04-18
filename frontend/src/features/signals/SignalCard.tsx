@@ -1,8 +1,10 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '../../components/design-system/Card';
 import { Clock, ShieldAlert } from 'lucide-react';
 
 export const SignalCard: React.FC<{ signal: any }> = ({ signal }) => {
+  const navigate = useNavigate();
   // Null safety checks
   const verificationState = signal?.verification_state || 'verified';
   const signalType = signal?.signal_type || 'HOLD';
@@ -56,7 +58,12 @@ export const SignalCard: React.FC<{ signal: any }> = ({ signal }) => {
       
       <div className="mt-6 pt-6 border-t border-white/5 flex justify-between items-center text-[10px]">
         <span className={`px-2 py-1 rounded border uppercase tracking-widest ${stateClass}`}>{verificationState}</span>
-        <button className="text-accent hover:underline font-bold">Deep Research →</button>
+        <button
+          onClick={() => navigate(`/stock/${signal?.symbol}`)}
+          className="text-accent hover:underline font-bold transition-colors"
+        >
+          Deep Research →
+        </button>
       </div>
     </Card>
   );
